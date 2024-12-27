@@ -1,0 +1,10 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+#    url: jdbc:mysql://39.99.41.222:3306/med_image_analyse
+    url: jdbc:mysql://localhost:3306/med_image_analyse
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
