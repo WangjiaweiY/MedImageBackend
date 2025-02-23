@@ -1,5 +1,6 @@
 package com.nwu.medimagebackend;
 
+import net.imagej.ImageJ;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -7,7 +8,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 class MedimagebackendApplicationTests {
 
     @Test
-    void contextLoads() {
+    void testImagej() {
+        ImageJ ij = new ImageJ();
+        ij.ui().showUI();
+
     }
 
 }
