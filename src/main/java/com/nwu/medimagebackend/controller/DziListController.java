@@ -87,23 +87,48 @@ public class DziListController {
         }
     }
 
-    /**
-     * 获取指定日期文件夹下的文件列表
-     * GET /api/dzi/list/{folderName}
-     */
     @GetMapping("/list/{folderName}")
-    public ResponseEntity<List<String>> listFilesInFolder(@PathVariable String folderName) {
-        List<String> fileNames = new ArrayList<>();
+    public ResponseEntity<List<FileItem>> listFilesInFolder(@PathVariable String folderName) {
+        List<FileItem> items = new ArrayList<>();
         File folder = new File(dziUploadDir, folderName);
         if (!folder.exists() || !folder.isDirectory()) {
             return ResponseEntity.notFound().build();
         }
-        File[] files = folder.listFiles(File::isFile);
-        if (files != null) {
-            for (File f : files) {
-                fileNames.add(f.getName());
+        // 获取文件夹下的所有子项（文件和目录）
+        File[] subItems = folder.listFiles();
+        if (subItems != null) {
+            for (File f : subItems) {
+                items.add(new FileItem(f.getName(), f.isDirectory()));
             }
         }
-        return ResponseEntity.ok(fileNames);
+        return ResponseEntity.ok(items);
     }
+
+    // 定义一个返回项的 POJO 类，用于区分文件和目录
+    public static class FileItem {
+        private String name;
+        private boolean directory; // true 表示目录，false 表示文件
+
+        public FileItem(String name, boolean directory) {
+            this.name = name;
+            this.directory = directory;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isDirectory() {
+            return directory;
+        }
+
+        public void setDirectory(boolean directory) {
+            this.directory = directory;
+        }
+    }
+
 }
