@@ -1,11 +1,15 @@
 package com.nwu.medimagebackend.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.HandlerMapping;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -16,6 +20,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/dzi")
 @CrossOrigin(origins = "*")
+@Slf4j
 public class DziListController {
 
     // 从配置文件中读取 uploads/dzi 目录的路径，默认值为相对路径 "./uploads/dzi/"
@@ -72,9 +77,16 @@ public class DziListController {
     /**
      * 提供静态资源访问的接口（例如 DZI 描述文件或 tile 图片）
      */
-    @GetMapping("/processed/{fileName:.+}")
-    public ResponseEntity<Resource> getDziFile(@PathVariable String fileName) {
+    @GetMapping("/processed/**")
+    public ResponseEntity<Resource> getDziFile(HttpServletRequest request) {
         try {
+            // 从请求属性中获取完整的请求路径
+            String restOfThePath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
+            // 获取匹配的模式
+            String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
+            // 利用 AntPathMatcher 提取出 /processed/ 后面的路径（如 "20250215/test_files0/0_0.jpeg"）
+            String fileName = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, restOfThePath);
+            // 构造文件系统中的路径
             Path filePath = Paths.get(dziUploadDir).resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
