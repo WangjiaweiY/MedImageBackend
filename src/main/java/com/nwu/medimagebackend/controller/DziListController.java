@@ -36,6 +36,10 @@ public class DziListController {
             this.folderName = folderName;
             this.fileNames = fileNames;
         }
+
+        public FileInfo(String folderName) {
+            this.folderName = folderName;
+        }
         public String getFolderName() {
             return folderName;
         }

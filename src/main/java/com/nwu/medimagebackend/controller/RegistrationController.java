@@ -7,14 +7,19 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/svs")
 @CrossOrigin(origins = "*")
 @Slf4j
-public class RegistrationUploadController {
+public class RegistrationController {
 
     // 从配置文件中读取上传目录，默认为相对路径 "./uploads/svs/"
     @Value("${uploads.svs.dir:./uploads/svs/}")
@@ -56,5 +61,38 @@ public class RegistrationUploadController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("{\"error\": \"上传失败\"}");
         }
+    }
+
+    @GetMapping("/list")
+    public ResponseEntity<List<DziListController.FileInfo>> listDziFiles() {
+        List<DziListController.FileInfo> result = new ArrayList<>();
+        File baseDir = new File(svsUploadDir);
+        if (!baseDir.exists() || !baseDir.isDirectory()) {
+            return ResponseEntity.ok(result);
+        }
+        // 遍历 uploads/dzi 下的每个子文件夹
+        File[] subDirs = baseDir.listFiles(File::isDirectory);
+        if (subDirs != null) {
+            for (File subDir : subDirs) {
+                List<String> fileNames = new ArrayList<>();
+                File[] files = subDir.listFiles(File::isFile);
+                result.add(new DziListController.FileInfo(subDir.getName()));
+            }
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/register/{folder}")
+    public ResponseEntity<Map<String, Object>> registerFolder(@PathVariable("folder") String folderName) {
+        // 打印日志，记录接收到的文件夹名称
+        log.info("接收到文件夹 [" + folderName + "] 的配准请求");
+
+        // TODO: 在此处添加具体的图像配准逻辑
+
+        // 构造返回的 JSON 响应
+        Map<String, Object> response = new HashMap<>();
+        response.put("message", "配准任务已启动");
+        response.put("folder", folderName);
+        return ResponseEntity.ok(response);
     }
 }
