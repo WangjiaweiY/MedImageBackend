@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -89,10 +90,16 @@ public class RegistrationController {
 
         // TODO: 在此处添加具体的图像配准逻辑
 
+        RestTemplate restTemplate = new RestTemplate();
+        String url = "http://localhost:8000/register";
+        Map<String, String> requestBody = new HashMap<>();
+        requestBody.put("folder", folderName);
+        ResponseEntity<Map> response = restTemplate.postForEntity(url, requestBody, Map.class);
+        System.out.println("配准结果：" + response.getBody());
         // 构造返回的 JSON 响应
-        Map<String, Object> response = new HashMap<>();
-        response.put("message", "配准任务已启动");
-        response.put("folder", folderName);
-        return ResponseEntity.ok(response);
+        Map<String, Object> response1 = new HashMap<>();
+        response1.put("message", "配准任务已启动");
+        response1.put("folder", folderName);
+        return ResponseEntity.ok(response1);
     }
 }

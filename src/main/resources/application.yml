@@ -15,6 +15,6 @@ spring:
 
 uploads:
   dzi:
-    dir: "./uploads/dzi/"
+    dir: "../uploads/dzi/"
   svs:
-    dir: "./uploads/svs/"
+    dir: "../uploads/svs/"
