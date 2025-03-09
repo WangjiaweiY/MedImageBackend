@@ -75,8 +75,8 @@ public class RegistrationController {
 
 
     @GetMapping("/list")
-    public ResponseEntity<List<DziListController.FileInfo>> listDziFiles() {
-        List<DziListController.FileInfo> result = new ArrayList<>();
+    public ResponseEntity<List<DziController.FileInfo>> listDziFiles() {
+        List<DziController.FileInfo> result = new ArrayList<>();
         File baseDir = new File(svsUploadDir);
         if (!baseDir.exists() || !baseDir.isDirectory()) {
             return ResponseEntity.ok(result);
@@ -87,7 +87,7 @@ public class RegistrationController {
             for (File subDir : subDirs) {
                 List<String> fileNames = new ArrayList<>();
                 File[] files = subDir.listFiles(File::isFile);
-                result.add(new DziListController.FileInfo(subDir.getName()));
+                result.add(new DziController.FileInfo(subDir.getName()));
             }
         }
         return ResponseEntity.ok(result);

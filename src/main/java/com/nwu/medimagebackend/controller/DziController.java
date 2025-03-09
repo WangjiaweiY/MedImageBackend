@@ -21,7 +21,7 @@ import java.util.List;
 @RequestMapping("/api/dzi")
 @CrossOrigin(origins = "*")
 @Slf4j
-public class DziListController {
+public class DziController {
 
     // 从配置文件中读取 uploads/dzi 目录的路径，默认值为相对路径 "./uploads/dzi/"
     @Value("${uploads.dzi.dir:./uploads/dzi/}")
@@ -119,6 +119,84 @@ public class DziListController {
         }
         return ResponseEntity.ok(items);
     }
+
+    @DeleteMapping("/deleteFolder/{folderName}")
+    public ResponseEntity<Void> deleteFolder(@PathVariable String folderName) {
+        try {
+            Path baseDir = Paths.get(dziUploadDir).toAbsolutePath().normalize();
+            Path targetDirPath = baseDir.resolve(folderName).normalize();
+            if (!targetDirPath.startsWith(baseDir)) {
+                log.warn("尝试删除不在目录内的文件夹: {}", targetDirPath);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            File targetDir = targetDirPath.toFile();
+            if (!targetDir.exists() || !targetDir.isDirectory()) {
+                return ResponseEntity.notFound().build();
+            }
+            if (deleteDirectoryRecursively(targetDir)) {
+                log.info(folderName + "删除成功");
+                return ResponseEntity.ok().build();
+            } else {
+                log.error("删除文件夹失败: {}", targetDirPath);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } catch (Exception e) {
+            log.error("删除文件夹异常: {} {}", folderName, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    @DeleteMapping("/delete/{folderName}/{fileName}")
+    public ResponseEntity<Void> deleteFile(
+            @PathVariable String folderName,
+            @PathVariable String fileName) {
+        try {
+            // 构造 uploads/dzi 目录的绝对路径
+            Path baseDir = Paths.get(dziUploadDir).toAbsolutePath().normalize();
+            // 构造目标目录的绝对路径
+            Path targetDirPath = baseDir.resolve(folderName).resolve(fileName).normalize();
+            log.info(targetDirPath.toString());
+            // 检查目标目录是否位于允许删除的目录下，防止目录穿越攻击
+            if (!targetDirPath.startsWith(baseDir)) {
+                log.warn("尝试删除不在目录内的目录: {}", targetDirPath);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            File targetDir = targetDirPath.toFile();
+            // 检查目录是否存在且确实为目录
+            if (!targetDir.exists() || !targetDir.isDirectory()) {
+                return ResponseEntity.notFound().build();
+            }
+            // 递归删除目录及其所有内容
+            if (deleteDirectoryRecursively(targetDir)) {
+                log.info(fileName + "已被删除");
+                return ResponseEntity.ok().build();
+            } else {
+                log.error("删除目录失败: {}", targetDirPath);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } catch (Exception e) {
+            log.error("删除目录异常: {} {}", folderName + "/" + fileName, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 递归删除目录及其所有内容
+     */
+    private boolean deleteDirectoryRecursively(File dir) {
+        if (dir.isDirectory()) {
+            File[] children = dir.listFiles();
+            if (children != null) {
+                for (File child : children) {
+                    if (!deleteDirectoryRecursively(child)) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return dir.delete();
+    }
+
+
 
     // 定义一个返回项的 POJO 类，用于区分文件和目录
     public static class FileItem {
