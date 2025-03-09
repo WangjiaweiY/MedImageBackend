@@ -11,10 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api/svs")
@@ -35,7 +32,7 @@ public class RegistrationController {
     @PostMapping("/upload")
     public ResponseEntity<?> handleSvsUpload(@RequestParam("files") MultipartFile[] files) {
         if (files == null || files.length == 0) {
-            return ResponseEntity.badRequest().body("{\"error\": \"未选择任何文件\"}");
+            return ResponseEntity.badRequest().body(Collections.singletonMap("error", "未选择任何文件"));
         }
         try {
             // 将相对路径转换为绝对路径
@@ -43,6 +40,14 @@ public class RegistrationController {
             if (!Files.exists(baseDir)) {
                 Files.createDirectories(baseDir);
             }
+
+            // 从第一个文件中提取文件夹名称（假设格式为 folderName/xxx...）
+            String folderName = "";
+            String firstFilePath = files[0].getOriginalFilename();
+            if (firstFilePath != null && firstFilePath.contains("/")) {
+                folderName = firstFilePath.substring(0, firstFilePath.indexOf("/"));
+            }
+
             // 遍历所有上传的文件，按照相对路径保存
             for (MultipartFile file : files) {
                 String relativePath = file.getOriginalFilename();
@@ -56,13 +61,18 @@ public class RegistrationController {
                 file.transferTo(targetPath.toFile());
                 log.info("保存文件至: " + targetPath.toString());
             }
-            return ResponseEntity.ok("{\"message\": \"上传成功\"}");
-        } catch (IOException e) {
+
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("message", "上传完毕");
+            responseMap.put("folder", folderName);
+            return ResponseEntity.ok(responseMap);
+        } catch (IOException | SecurityException e) {
             log.error("上传失败", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("{\"error\": \"上传失败\"}");
+                    .body(Collections.singletonMap("error", "上传失败：" + e.getMessage()));
         }
     }
+
 
     @GetMapping("/list")
     public ResponseEntity<List<DziListController.FileInfo>> listDziFiles() {
@@ -85,21 +95,30 @@ public class RegistrationController {
 
     @PostMapping("/register/{folder}")
     public ResponseEntity<Map<String, Object>> registerFolder(@PathVariable("folder") String folderName) {
-        // 打印日志，记录接收到的文件夹名称
         log.info("接收到文件夹 [" + folderName + "] 的配准请求");
+        try {
+            RestTemplate restTemplate = new RestTemplate();
+            String url = "http://localhost:8000/register";
+            Map<String, String> requestBody = new HashMap<>();
+            requestBody.put("folder", folderName);
+            ResponseEntity<Map> response = restTemplate.postForEntity(url, requestBody, Map.class);
 
-        // TODO: 在此处添加具体的图像配准逻辑
+            if (!response.getStatusCode().is2xxSuccessful()) {
+                log.error("配准服务返回错误状态: " + response.getStatusCode());
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body(Collections.singletonMap("error", "配准失败"));
+            }
 
-        RestTemplate restTemplate = new RestTemplate();
-        String url = "http://localhost:8000/register";
-        Map<String, String> requestBody = new HashMap<>();
-        requestBody.put("folder", folderName);
-        ResponseEntity<Map> response = restTemplate.postForEntity(url, requestBody, Map.class);
-        System.out.println("配准结果：" + response.getBody());
-        // 构造返回的 JSON 响应
-        Map<String, Object> response1 = new HashMap<>();
-        response1.put("message", "配准任务已启动");
-        response1.put("folder", folderName);
-        return ResponseEntity.ok(response1);
+            log.info("配准结果：" + response.getBody());
+            Map<String, Object> responseMap = new HashMap<>();
+            responseMap.put("message", "配准完毕");
+            responseMap.put("folder", folderName);
+            return ResponseEntity.ok(responseMap);
+        } catch (Exception e) {
+            log.error("配准请求异常", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "配准失败：" + e.getMessage()));
+        }
     }
+
 }
