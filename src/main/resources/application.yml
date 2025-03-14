@@ -18,3 +18,5 @@ uploads:
     dir: "../uploads/dzi/"
   svs:
     dir: "../uploads/svs/"
+  tiff:
+    dir: "../uploads/register_results"

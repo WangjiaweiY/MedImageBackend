@@ -3,50 +3,59 @@ package com.nwu.medimagebackend.service.impl;
 import com.nwu.medimagebackend.common.IhcAnalysisResult;
 import com.nwu.medimagebackend.mapper.IHCAnalysisMapper;
 import com.nwu.medimagebackend.service.IHCAnalysisService;
+import lombok.extern.slf4j.Slf4j;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.real.FloatType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Date;
 
 @Service
+@Slf4j
 public class IHCAnalysisServiceImpl implements IHCAnalysisService {
 
     @Autowired
     private IHCAnalysisMapper mapper;
 
-    @Override
-    public IhcAnalysisResult analyzeImage(MultipartFile file) throws Exception {
-        // 将上传文件保存为临时文件
-        File tempFile = File.createTempFile("upload", ".tif");
-        file.transferTo(tempFile);
+    @Value("../uploads/register_results/")
+    private String ImageDir;
 
-        // 创建 ImageJ2 实例
+    @Override
+    public IhcAnalysisResult analyzeImage(String folderName, String fileName) throws Exception {
+        // Construct the file path
+        Path imagePath = Paths.get(ImageDir, folderName, "registered_slides", fileName+".ome.tiff");
+        log.info(imagePath.toString());
+
+        // Check if the file exists
+        if (!Files.exists(imagePath)) {
+            throw new IOException("File not found: " + imagePath.toString());
+        }
+
+        // Create ImageJ instance
         ImageJ ij = new ImageJ();
 
-        // 使用 SciJava IO 打开 TIFF 文件，得到 Dataset 对象
-        Dataset dataset = ij.scifio().datasetIO().open(tempFile.getAbsolutePath());
-        // 从 Dataset 中获取 ImgPlus，再获得 Img
-        // 此处假设图像数据转换为 FloatType，如有需要，可调用 ij.convert() 进行类型转换
+        // Open the image file
+        Dataset dataset = ij.scifio().datasetIO().open(imagePath.toString());
         Img<FloatType> img = (Img<FloatType>) dataset.getImgPlus().getImg();
 
-        // 计算图像总像素数（支持多维图像，这里假设图像为二维）
-        long totalPixels = 1;
-//        for (long d : img.dimensions()) {
-//            totalPixels *= d;
-//        }
+        // Calculate total pixels
+        long totalPixels = img.size();
 
-        // 定义阈值（根据实际需要调整阈值数值）
+        // Define threshold
         float threshold = 128f;
         long positiveCount = 0;
 
-        // 利用 ImgLib2 的 Cursor 遍历像素
+        // Iterate over pixels
         Cursor<FloatType> cursor = img.cursor();
         while (cursor.hasNext()) {
             FloatType pixel = cursor.next();
@@ -55,18 +64,15 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
             }
         }
 
-        // 构建分析结果对象
+        // Build analysis result
         IhcAnalysisResult result = new IhcAnalysisResult();
-        result.setImageName(file.getOriginalFilename());
+        result.setImageName(fileName);
         result.setPositiveArea(positiveCount);
         result.setTotalArea(totalPixels);
         result.setAnalysisDate(new Date());
 
-        // 保存结果到数据库
+        // Save result to database
         mapper.insert(result);
-
-        // 删除临时文件
-        tempFile.delete();
 
         return result;
     }

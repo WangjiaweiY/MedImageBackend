@@ -5,5 +5,5 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface IHCAnalysisService {
 
-    IhcAnalysisResult analyzeImage(MultipartFile file) throws Exception;
+    IhcAnalysisResult analyzeImage(String folderName, String fileName) throws Exception;
 }
