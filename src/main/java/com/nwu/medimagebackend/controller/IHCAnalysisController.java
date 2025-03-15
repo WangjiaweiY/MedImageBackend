@@ -23,8 +23,8 @@ public class IHCAnalysisController {
             @RequestParam("folderName") String folderName,
             @RequestParam("fileName") String fileName) {
         try {
-            IhcAnalysisResult result = analysisService.analyzeImage(folderName, fileName);
             log.info("已接收到：" + folderName + "/" + folderName + "的免疫组化分析请求");
+            IhcAnalysisResult result = analysisService.analyzeImage(folderName, fileName);
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             e.printStackTrace();

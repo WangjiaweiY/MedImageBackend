@@ -2,6 +2,7 @@ package com.nwu.medimagebackend.common;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import java.math.BigDecimal;
 import java.util.Date;
 
 public class IhcAnalysisResult {
@@ -14,6 +15,8 @@ public class IhcAnalysisResult {
     private double totalArea;    // 总像素数
     @JsonFormat(pattern = "yyyy-MM-dd-HH:mm", timezone = "GMT+8")
     private Date analysisDate;
+
+    private BigDecimal positiveRatio;
 
     // getter & setter
     public Long getId() {
@@ -53,5 +56,13 @@ public class IhcAnalysisResult {
 
     public void setFolderName(String folderName) {
         this.folderName = folderName;
+    }
+
+    public BigDecimal getPositiveRatio() {
+        return positiveRatio;
+    }
+
+    public void setPositiveRatio(BigDecimal positiveRatio) {
+        this.positiveRatio = positiveRatio;
     }
 }
