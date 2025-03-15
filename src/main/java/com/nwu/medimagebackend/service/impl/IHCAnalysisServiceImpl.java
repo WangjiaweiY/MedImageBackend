@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -44,36 +45,47 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
         // Create ImageJ instance
         ImageJ ij = new ImageJ();
 
-        // Open the image file
-        Dataset dataset = ij.scifio().datasetIO().open(imagePath.toString());
-        Img<FloatType> img = (Img<FloatType>) dataset.getImgPlus().getImg();
-
-        // Calculate total pixels
-        long totalPixels = img.size();
-
-        // Define threshold
-        float threshold = 128f;
-        long positiveCount = 0;
-
-        // Iterate over pixels
-        Cursor<FloatType> cursor = img.cursor();
-        while (cursor.hasNext()) {
-            FloatType pixel = cursor.next();
-            if (pixel.get() >= threshold) {
-                positiveCount++;
-            }
-        }
+//        // Open the image file
+//        Dataset dataset = ij.scifio().datasetIO().open(imagePath.toString());
+//        Img<FloatType> img = (Img<FloatType>) dataset.getImgPlus().getImg();
+//
+//        // Calculate total pixels
+//        long totalPixels = img.size();
+//
+//        // Define threshold
+//        float threshold = 128f;
+//        long positiveCount = 0;
+//
+//        // Iterate over pixels
+//        Cursor<FloatType> cursor = img.cursor();
+//        while (cursor.hasNext()) {
+//            FloatType pixel = cursor.next();
+//            if (pixel.get() >= threshold) {
+//                positiveCount++;
+//            }
+//        }
 
         // Build analysis result
         IhcAnalysisResult result = new IhcAnalysisResult();
         result.setImageName(fileName);
-        result.setPositiveArea(positiveCount);
-        result.setTotalArea(totalPixels);
+        result.setFolderName(folderName);
+        result.setPositiveArea(123);
+        result.setTotalArea(12345);
         result.setAnalysisDate(new Date());
 
         // Save result to database
         mapper.insert(result);
 
         return result;
+    }
+
+    @Override
+    public IhcAnalysisResult getAnalysisResult(String folderName, String fileName) {
+        return mapper.findByImageName(folderName, fileName);
+    }
+
+    @Override
+    public List<IhcAnalysisResult> getResultsByFolder(String folderName) {
+        return mapper.findByFolderName(folderName);
     }
 }

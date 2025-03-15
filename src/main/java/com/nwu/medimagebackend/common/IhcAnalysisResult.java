@@ -1,12 +1,18 @@
 package com.nwu.medimagebackend.common;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.util.Date;
 
 public class IhcAnalysisResult {
     private Long id;
+
+    private String folderName;
+
     private String imageName;
     private double positiveArea; // 正染区域像素数
     private double totalArea;    // 总像素数
+    @JsonFormat(pattern = "yyyy-MM-dd-HH:mm", timezone = "GMT+8")
     private Date analysisDate;
 
     // getter & setter
@@ -39,5 +45,13 @@ public class IhcAnalysisResult {
     }
     public void setAnalysisDate(Date analysisDate) {
         this.analysisDate = analysisDate;
+    }
+
+    public String getFolderName() {
+        return folderName;
+    }
+
+    public void setFolderName(String folderName) {
+        this.folderName = folderName;
     }
 }

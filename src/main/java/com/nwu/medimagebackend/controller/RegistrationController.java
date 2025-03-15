@@ -27,6 +27,7 @@ public class RegistrationController {
     @PostMapping("/upload")
     public ResponseEntity<?> handleSvsUpload(@RequestParam("files") MultipartFile[] files) {
         try {
+            log.info("上传文件：" + files);
             Map<String, Object> response = registrationService.handleSvsUpload(files);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
@@ -41,6 +42,7 @@ public class RegistrationController {
      */
     @GetMapping("/list")
     public ResponseEntity<List<FileInfo>> listSvsFiles() {
+        log.info("拉取配准文件列表");
         List<FileInfo> result = registrationService.listSvsFiles();
         return ResponseEntity.ok(result);
     }
