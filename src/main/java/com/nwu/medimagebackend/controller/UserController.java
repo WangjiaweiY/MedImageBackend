@@ -1,7 +1,7 @@
 package com.nwu.medimagebackend.controller;
 
 import com.nwu.medimagebackend.DTO.LoginDTO;
-import com.nwu.medimagebackend.common.Result;
+import com.nwu.medimagebackend.entity.Result;
 import com.nwu.medimagebackend.entity.User;
 import com.nwu.medimagebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;

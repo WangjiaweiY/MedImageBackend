@@ -1,4 +1,4 @@
-package com.nwu.medimagebackend.common;
+package com.nwu.medimagebackend.entity;
 
 import lombok.Data;
 

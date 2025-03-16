@@ -1,14 +1,13 @@
 package com.nwu.medimagebackend.service.impl;
 
-import com.nwu.medimagebackend.common.FileInfo;
-import com.nwu.medimagebackend.common.FileItem;
+import com.nwu.medimagebackend.entity.FileInfo;
+import com.nwu.medimagebackend.entity.FileItem;
 import com.nwu.medimagebackend.service.DziService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.AntPathMatcher;
 
 import java.io.File;
 import java.nio.file.Path;

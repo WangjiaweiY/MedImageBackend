@@ -1,7 +1,6 @@
 package com.nwu.medimagebackend.service;
 
-import com.nwu.medimagebackend.common.IhcAnalysisResult;
-import org.springframework.web.multipart.MultipartFile;
+import com.nwu.medimagebackend.entity.IhcAnalysisResult;
 
 import java.util.List;
 

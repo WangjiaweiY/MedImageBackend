@@ -1,7 +1,7 @@
 package com.nwu.medimagebackend.service;
 
-import com.nwu.medimagebackend.common.FileInfo;
-import com.nwu.medimagebackend.common.FileItem;
+import com.nwu.medimagebackend.entity.FileInfo;
+import com.nwu.medimagebackend.entity.FileItem;
 import org.springframework.core.io.Resource;
 
 import java.util.List;

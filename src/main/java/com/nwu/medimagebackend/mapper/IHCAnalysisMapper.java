@@ -1,6 +1,6 @@
 package com.nwu.medimagebackend.mapper;
 
-import com.nwu.medimagebackend.common.IhcAnalysisResult;
+import com.nwu.medimagebackend.entity.IhcAnalysisResult;
 import org.apache.ibatis.annotations.*;
 
 import java.util.List;

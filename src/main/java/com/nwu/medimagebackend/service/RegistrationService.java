@@ -1,6 +1,6 @@
 package com.nwu.medimagebackend.service;
 
-import com.nwu.medimagebackend.common.FileInfo;
+import com.nwu.medimagebackend.entity.FileInfo;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;

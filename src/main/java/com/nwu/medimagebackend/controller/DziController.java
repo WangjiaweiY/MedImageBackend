@@ -1,7 +1,7 @@
 package com.nwu.medimagebackend.controller;
 
-import com.nwu.medimagebackend.common.FileInfo;
-import com.nwu.medimagebackend.common.FileItem;
+import com.nwu.medimagebackend.entity.FileInfo;
+import com.nwu.medimagebackend.entity.FileItem;
 import com.nwu.medimagebackend.service.DziService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;

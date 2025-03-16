@@ -1,21 +1,18 @@
 package com.nwu.medimagebackend.service.impl;
 
-import com.nwu.medimagebackend.common.IhcAnalysisResult;
+import com.nwu.medimagebackend.entity.IhcAnalysisResult;
 import com.nwu.medimagebackend.mapper.IHCAnalysisMapper;
 import com.nwu.medimagebackend.service.IHCAnalysisService;
 import lombok.extern.slf4j.Slf4j;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import net.imagej.table.ResultsTable;
 import net.imglib2.Cursor;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;

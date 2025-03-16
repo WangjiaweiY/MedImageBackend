@@ -1,6 +1,6 @@
 package com.nwu.medimagebackend.service.impl;
 
-import com.nwu.medimagebackend.common.FileInfo;
+import com.nwu.medimagebackend.entity.FileInfo;
 import com.nwu.medimagebackend.service.RegistrationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

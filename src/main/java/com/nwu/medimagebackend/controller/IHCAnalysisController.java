@@ -1,6 +1,6 @@
 package com.nwu.medimagebackend.controller;
 
-import com.nwu.medimagebackend.common.IhcAnalysisResult;
+import com.nwu.medimagebackend.entity.IhcAnalysisResult;
 import com.nwu.medimagebackend.service.IHCAnalysisService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
