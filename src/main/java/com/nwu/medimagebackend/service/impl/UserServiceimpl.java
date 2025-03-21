@@ -6,6 +6,7 @@ import com.nwu.medimagebackend.mapper.UserMapper;
 import com.nwu.medimagebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
@@ -16,23 +17,29 @@ public class UserServiceimpl implements UserService {
     @Autowired
     UserMapper userMapper;
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     @Override
-    public User login(LoginDTO loginDTO) {
-        String username = loginDTO.getUsername();
-        String password = loginDTO.getPassword();
-
-        User user = userMapper.getByUsername(username);
-
-        if (user == null) {
-            // 用户不存在，返回 null 或者抛出自定义异常
-            throw new RuntimeException("用户名不存在");
+    public void register(User user) throws Exception {
+        if (userMapper.findByUsername(user.getUsername()) != null) {
+            throw new Exception("用户名已存在");
         }
-        password = DigestUtils.md5DigestAsHex(password.getBytes());
-        if (!user.getPassword().equals(password)) {
-            // 密码不匹配，返回 null 或者抛出自定义异常
-            throw new RuntimeException("密码错误");
-        }
+        // 使用 BCrypt 进行密码加密
+        String encryptedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encryptedPassword);
+        userMapper.insertUser(user);
+    }
 
-        return user;
+    @Override
+    public User login(User user) throws Exception {
+        User existingUser = userMapper.findByUsername(user.getUsername());
+        if (existingUser == null) {
+            throw new Exception("用户不存在");
+        }
+        // 使用 BCrypt 进行密码匹配
+        if (!passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
+            throw new Exception("密码错误");
+        }
+        return existingUser;
     }
 }

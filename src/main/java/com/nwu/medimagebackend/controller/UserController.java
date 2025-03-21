@@ -6,6 +6,8 @@ import com.nwu.medimagebackend.entity.User;
 import com.nwu.medimagebackend.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,12 +22,29 @@ public class UserController {
     private UserService userService;
 
     @PostMapping("/login")
-    public Result<User> login(@RequestBody LoginDTO loginDTO) {
-        log.info("登录信息:{}", loginDTO);
+    public ResponseEntity<?> login(@RequestBody User user) {
+        try {
+            log.info("用户：" + user.getUsername() + "登录");
+            User loginUser = userService.login(user);
+            if (loginUser != null) {
+                return ResponseEntity.ok(loginUser);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("用户名或密码错误");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
 
-        User user = userService.login(loginDTO);
-
-        return Result.success(user);
+    @PostMapping("/register")
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            userService.register(user);
+            return ResponseEntity.ok("注册成功");
+        } catch (Exception e) {
+            // 返回错误信息，实际项目中可进一步封装统一返回格式
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 
 }
