@@ -18,7 +18,9 @@ public interface IHCAnalysisMapper {
             @Result(property = "positiveArea", column = "positive_area"),
             @Result(property = "totalArea", column = "total_area"),
             @Result(property = "positiveRatio", column = "positive_ratio"),
-            @Result(property = "analysisDate", column = "analysis_date")
+            @Result(property = "uploadsDate", column = "uploads_date"),
+            @Result(property = "analysisDate", column = "analysis_date"),
+            @Result(property = "userName", column = "username")
     })
     IhcAnalysisResult findByImageName(@Param("folderName") String folderName, @Param("fileName") String fileName);
 
@@ -30,11 +32,13 @@ public interface IHCAnalysisMapper {
             @Result(property = "positiveArea", column = "positive_area"),
             @Result(property = "totalArea", column = "total_area"),
             @Result(property = "positiveRatio", column = "positive_ratio"),
-            @Result(property = "analysisDate", column = "analysis_date")
+            @Result(property = "uploadsDate", column = "uploads_date"),
+            @Result(property = "analysisDate", column = "analysis_date"),
+            @Result(property = "userName", column = "username")
     })
     List<IhcAnalysisResult> findByFolderName(String folderName);
 
-    @Update("UPDATE ihcs set positive_area = #{positiveArea}, total_area = #{totalArea}, positive_ratio = #{positiveRatio} where foldername = #{folderName} and image_name = #{imageName}")
+    @Update("UPDATE ihcs set positive_area = #{positiveArea}, total_area = #{totalArea}, positive_ratio = #{positiveRatio}, analysis_date = #{analysisDate} where foldername = #{folderName} and image_name = #{imageName}")
     int updateIhcAnalysisResult(IhcAnalysisResult result);
 
 }

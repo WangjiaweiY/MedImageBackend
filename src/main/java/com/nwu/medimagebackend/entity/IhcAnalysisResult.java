@@ -21,6 +21,9 @@ public class IhcAnalysisResult {
     private double totalArea;    // 总像素数
 
     @JsonFormat(pattern = "yyyy-MM-dd-HH:mm", timezone = "GMT+8")
+    private Date uploadsDate;
+
+    @JsonFormat(pattern = "yyyy-MM-dd-HH:mm", timezone = "GMT+8")
     private Date analysisDate;
 
     private BigDecimal positiveRatio;
@@ -31,7 +34,7 @@ public class IhcAnalysisResult {
         this.folderName = folderName;
         this.imageName = fileName;
         this.userName = userName;
-        this.analysisDate = date;
+        this.uploadsDate = date;
         this.positiveArea = -0.0;
         this.totalArea = -0.0;
         this.positiveRatio = BigDecimal.valueOf(-0.0);
