@@ -3,7 +3,9 @@ package com.nwu.medimagebackend.service.impl;
 import com.nwu.medimagebackend.entity.FileInfo;
 import com.nwu.medimagebackend.entity.FileItem;
 import com.nwu.medimagebackend.service.DziService;
+import com.nwu.medimagebackend.mapper.DziMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,6 +24,9 @@ public class DziServiceimpl implements DziService {
     // 从配置文件中读取 uploads/dzi 目录的路径，默认值为相对路径 "./uploads/dzi/"
     @Value("${uploads.dzi.dir:./uploads/dzi/}")
     private String dziUploadDir;
+
+    @Autowired
+    private DziMapper dziMapper;
 
     @Override
     public List<FileInfo> listDziFiles() {
@@ -113,7 +118,13 @@ public class DziServiceimpl implements DziService {
             if (!target.exists() || !target.isDirectory()) {
                 return false;
             }
-            return deleteDirectoryRecursively(target);
+            boolean fileDeleted = deleteDirectoryRecursively(target);
+            if (fileDeleted) {
+                // 删除数据库中对应folderName的数据
+                int rows = dziMapper.deleteByFilename(folderName,fileName);
+                log.info("数据库删除数据行数: {}", rows);
+            }
+            return fileDeleted;
         } catch (Exception e) {
             log.error("删除文件 {}/{} 异常: {}", folderName, fileName, e.getMessage());
             return false;

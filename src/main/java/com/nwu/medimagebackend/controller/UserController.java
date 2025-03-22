@@ -42,7 +42,6 @@ public class UserController {
             userService.register(user);
             return ResponseEntity.ok("注册成功");
         } catch (Exception e) {
-            // 返回错误信息，实际项目中可进一步封装统一返回格式
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
