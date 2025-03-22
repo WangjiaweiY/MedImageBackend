@@ -2,11 +2,13 @@ package com.nwu.medimagebackend.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
+@NoArgsConstructor
 public class IhcAnalysisResult {
     private Long id;
 
@@ -23,4 +25,15 @@ public class IhcAnalysisResult {
 
     private BigDecimal positiveRatio;
 
+    private String userName;
+
+    public IhcAnalysisResult(String folderName, String fileName, String userName, Date date) {
+        this.folderName = folderName;
+        this.imageName = fileName;
+        this.userName = userName;
+        this.analysisDate = date;
+        this.positiveArea = -0.0;
+        this.totalArea = -0.0;
+        this.positiveRatio = BigDecimal.valueOf(-0.0);
+    }
 }

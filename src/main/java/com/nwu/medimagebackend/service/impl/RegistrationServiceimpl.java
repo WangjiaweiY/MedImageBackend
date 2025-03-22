@@ -1,8 +1,11 @@
 package com.nwu.medimagebackend.service.impl;
 
 import com.nwu.medimagebackend.entity.FileInfo;
+import com.nwu.medimagebackend.entity.IhcAnalysisResult;
+import com.nwu.medimagebackend.mapper.RegistrationMapper;
 import com.nwu.medimagebackend.service.RegistrationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -13,7 +16,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Date;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -22,6 +27,9 @@ public class RegistrationServiceimpl implements RegistrationService {
     // 从配置文件中读取上传目录，默认为相对路径 "./uploads/svs/"
     @Value("${uploads.svs.dir:./uploads/svs/}")
     private String svsUploadDir;
+
+    @Autowired
+    private RegistrationMapper registrationMapper;
 
     @Override
     public Map<String, Object> handleSvsUpload(MultipartFile[] files) throws IOException {
@@ -80,7 +88,7 @@ public class RegistrationServiceimpl implements RegistrationService {
     }
 
     @Override
-    public Map<String, Object> registerFolder(String folderName) {
+    public Map<String, Object> registerFolder(String folderName, String userName) {
         log.info("接收到文件夹 [{}] 的配准请求", folderName);
         RestTemplate restTemplate = new RestTemplate();
         String url = "http://localhost:8000/register";
@@ -93,7 +101,31 @@ public class RegistrationServiceimpl implements RegistrationService {
             throw new RuntimeException("配准失败");
         }
 
-        log.info("配准结果：{}", response.getBody());
+        Path folderPath = Paths.get(svsUploadDir, folderName).toAbsolutePath().normalize();
+        if (!Files.exists(folderPath) || !Files.isDirectory(folderPath)) {
+            log.error("文件夹不存在: {}", folderPath);
+            throw new RuntimeException("文件夹不存在");
+        }
+
+        // 遍历文件夹下的所有文件
+        try (Stream<Path> filePathStream = Files.walk(folderPath)) {
+            filePathStream.filter(Files::isRegularFile).forEach(filePath -> {
+                String fileNameWithExtension = filePath.getFileName().toString();
+                String fileNameWithoutExtension = fileNameWithExtension;
+                int dotIndex = fileNameWithExtension.lastIndexOf('.');
+                if (dotIndex > 0) {
+                    fileNameWithoutExtension = fileNameWithExtension.substring(0, dotIndex);
+                }
+                IhcAnalysisResult fileInfo = new IhcAnalysisResult(folderName, fileNameWithoutExtension, userName, new Date());
+                registrationMapper.insertFileInfo(fileInfo);
+                log.info("已保存文件信息: {}", fileInfo);
+            });
+        } catch (IOException e) {
+            log.error("遍历文件夹时发生错误: {}", e.getMessage());
+            throw new RuntimeException("遍历文件夹时发生错误", e);
+        }
+
+//        log.info("配准结果：{}", response.getBody());
         Map<String, Object> responseMap = new HashMap<>();
         responseMap.put("message", "配准完毕");
         responseMap.put("folder", folderName);

@@ -51,9 +51,12 @@ public class RegistrationController {
      * 调用外部配准服务处理指定文件夹的配准操作
      */
     @PostMapping("/register/{folder}")
-    public ResponseEntity<Map<String, Object>> registerFolder(@PathVariable("folder") String folderName) {
+    public ResponseEntity<Map<String, Object>> registerFolder(
+            @PathVariable("folder") String folderName,
+            @RequestBody Map<String, String> requestBody) {
         try {
-            Map<String, Object> response = registrationService.registerFolder(folderName);
+            String userName = requestBody.get("username");
+            Map<String, Object> response = registrationService.registerFolder(folderName, userName);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("配准请求异常", e);

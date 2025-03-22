@@ -21,5 +21,5 @@ public interface RegistrationService {
     /**
      * 调用配准服务处理指定文件夹的配准操作
      */
-    Map<String, Object> registerFolder(String folderName);
+    Map<String, Object> registerFolder(String folderName, String userName);
 }

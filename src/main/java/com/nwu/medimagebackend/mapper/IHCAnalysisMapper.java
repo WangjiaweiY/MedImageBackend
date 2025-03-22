@@ -7,11 +7,11 @@ import java.util.List;
 
 @Mapper
 public interface IHCAnalysisMapper {
-    @Insert("INSERT INTO ihc_analysis_result(image_name, positive_area, total_area, analysis_date, foldername, positive_ratio) " +
+    @Insert("INSERT INTO ihcs(image_name, positive_area, total_area, analysis_date, foldername, positive_ratio) " +
             "VALUES(#{imageName}, #{positiveArea}, #{totalArea}, #{analysisDate}, #{folderName}, #{positiveRatio})")
     int insert(IhcAnalysisResult result);
 
-    @Select("SELECT * FROM ihc_analysis_result WHERE foldername = #{folderName} AND image_name = #{fileName}")
+    @Select("SELECT * FROM ihcs WHERE foldername = #{folderName} AND image_name = #{fileName}")
     @Results({
             @Result(property = "folderName", column = "foldername"),
             @Result(property = "imageName", column = "image_name"),
@@ -23,7 +23,7 @@ public interface IHCAnalysisMapper {
     IhcAnalysisResult findByImageName(@Param("folderName") String folderName, @Param("fileName") String fileName);
 
 
-    @Select("SELECT * FROM ihc_analysis_result WHERE foldername = #{folderName}")
+    @Select("SELECT * FROM ihcs WHERE foldername = #{folderName}")
     @Results({
             @Result(property = "folderName", column = "foldername"),
             @Result(property = "imageName", column = "image_name"),
@@ -33,5 +33,8 @@ public interface IHCAnalysisMapper {
             @Result(property = "analysisDate", column = "analysis_date")
     })
     List<IhcAnalysisResult> findByFolderName(String folderName);
+
+    @Update("UPDATE ihcs set positive_area = #{positiveArea}, total_area = #{totalArea}, positive_ratio = #{positiveRatio} where foldername = #{folderName} and image_name = #{imageName}")
+    int updateIhcAnalysisResult(IhcAnalysisResult result);
 
 }

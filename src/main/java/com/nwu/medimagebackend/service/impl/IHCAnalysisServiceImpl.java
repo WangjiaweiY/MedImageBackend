@@ -84,9 +84,7 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
             result.setPositiveRatio(BigDecimal.ZERO);
         }
 
-        // 保存结果到数据库
-        mapper.insert(result);
-
+        mapper.updateIhcAnalysisResult(result);
         log.info("文件：" + folderName + "/" + fileName + "分析完毕");
 
         return result;
