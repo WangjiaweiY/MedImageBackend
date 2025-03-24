@@ -8,6 +8,11 @@ spring:
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-timeout: 300000
+      maximum-pool-size: 10
+      idle-timeout: 6000000
+      max-lifetime: 18000000
   servlet:
     multipart:
       max-file-size: 5GB
