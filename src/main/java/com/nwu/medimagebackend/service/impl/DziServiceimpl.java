@@ -78,12 +78,10 @@ public class DziServiceimpl implements DziService {
      */
     @Override
     public Resource getDziFile(String relativePath) throws Exception {
-        log.debug("尝试获取DZI资源: {}", relativePath);
         // 构造文件系统中的路径
         Path filePath = Paths.get(dziUploadDir).resolve(relativePath).normalize();
         Resource resource = new UrlResource(filePath.toUri());
         if (resource.exists()) {
-            log.debug("成功找到DZI资源: {}", filePath);
             return resource;
         } else {
             log.warn("请求的DZI资源不存在: {}", filePath);

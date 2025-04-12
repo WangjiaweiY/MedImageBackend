@@ -65,10 +65,8 @@ public class DziController {
             String bestMatchPattern = (String) request.getAttribute(HandlerMapping.BEST_MATCHING_PATTERN_ATTRIBUTE);
             // 利用AntPathMatcher提取出/processed/后面的路径
             String relativePath = new AntPathMatcher().extractPathWithinPattern(bestMatchPattern, restOfThePath);
-            
-            log.debug("请求DZI资源: {}", relativePath);
+
             Resource resource = dziService.getDziFile(relativePath);
-            log.debug("成功加载DZI资源: {}", relativePath);
             
             return ResponseEntity.ok().body(resource);
         } catch (Exception e) {
