@@ -21,6 +21,7 @@ public interface IHCAnalysisMapper {
             @Result(property = "uploadsDate", column = "uploads_date"),
             @Result(property = "analysisDate", column = "analysis_date"),
             @Result(property = "userName", column = "username")
+            // thumbnailPath 不从数据库映射，而是在服务层动态生成
     })
     IhcAnalysisResult findByImageName(@Param("folderName") String folderName, @Param("fileName") String fileName);
 
@@ -35,6 +36,7 @@ public interface IHCAnalysisMapper {
             @Result(property = "uploadsDate", column = "uploads_date"),
             @Result(property = "analysisDate", column = "analysis_date"),
             @Result(property = "userName", column = "username")
+            // thumbnailPath 不从数据库映射，而是在服务层动态生成
     })
     List<IhcAnalysisResult> findByFolderName(String folderName);
 

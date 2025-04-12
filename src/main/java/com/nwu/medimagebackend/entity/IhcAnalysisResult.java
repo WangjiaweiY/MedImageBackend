@@ -29,6 +29,11 @@ public class IhcAnalysisResult {
     private BigDecimal positiveRatio;
 
     private String userName;
+    
+    private String thumbnailPath;
+    
+    // 添加新字段，用于前端显示图像
+    private String imageUrl;
 
     public IhcAnalysisResult(String folderName, String fileName, String userName, Date date) {
         this.folderName = folderName;
