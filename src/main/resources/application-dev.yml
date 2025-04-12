@@ -1,0 +1,33 @@
+# 开发环境配置
+
+# 数据库配置
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/med_image_analyse
+    username: root
+    password: 1234
+
+# 上传目录配置（开发环境使用绝对路径）
+uploads:
+  # DZI图像目录
+  dzi:
+    dir: "D:/codeworkspace/uploads/dzi/"
+  # SVS图像上传目录
+  svs:
+    dir: "D:/codeworkspace/uploads/svs/"
+  # 注册结果目录
+  register:
+    dir: "D:/codeworkspace/uploads/register_results/"
+
+# 后端服务URL配置
+app:
+  # 后端服务URL，用于构建资源访问路径
+  backend-url: "http://localhost:8080"
+  # 开发环境启用详细日志
+  debug-logging: true
+
+# 日志配置
+logging:
+  level:
+    com.nwu.medimagebackend: DEBUG
+    org.springframework.web: INFO 

@@ -1,450 +1,180 @@
-# MedImageBackend
+# MedImage 医学图像分析后端系统
 
-# Registration 接口文档
+## 项目介绍
 
-**Base URL:** `/api/svs`
+MedImage是一个医学图像分析系统的后端部分，提供对医学图像（特别是免疫组化图像）的处理、分析和管理功能。系统支持图像上传、自动分析、结果存储和查询等核心功能。
 
-------
+### 主要功能
 
-## 1. 上传配准图像文件夹
+- **图像上传和管理**：支持SVS等格式的医学图像上传和管理
+- **免疫组化图像分析**：自动分析免疫组化图像中的阳性染色区域，计算阳性率
+- **数据存储和查询**：将分析结果存储在数据库中，支持按文件夹和文件名查询
+- **图像资源访问**：提供图像和缩略图的静态资源访问
 
-- **接口地址:** `/upload`
+## 环境要求
 
-- **请求方式:** `POST`
+- JDK 11+
+- MySQL 5.7+
+- Maven 3.6+
+- 磁盘空间：至少5GB（用于图像存储）
 
-- **描述:** 接收上传的配准图像文件夹（多个文件），并进行处理上传。
+## 快速开始
 
-- **请求参数:**
+### 1. 配置数据库
 
-  - **files** (Request Parameter, MultipartFile[]): 要上传的文件数组
+创建MySQL数据库并执行初始化脚本：
 
-- **请求示例 (curl):**
+```sql
+CREATE DATABASE med_image_analyse;
+USE med_image_analyse;
+-- 执行项目根目录下的schema.sql文件创建表结构
+```
 
-  ```
-  bash复制编辑curl -X POST "http://<server>/api/svs/upload" \
-       -F "files=@/path/to/file1" \
-       -F "files=@/path/to/file2"
-  ```
+### 2. 配置应用
 
-- **响应示例:**
+根据实际环境修改配置文件（`src/main/resources/application.yml`）中的数据库连接信息和文件存储路径。
 
-  ```
-  json复制编辑{
-    "status": "success",
-    "message": "上传成功",
-    "data": {
-      // 其他返回信息
-    }
-  }
-  ```
+### 3. 构建和运行
 
-- **返回状态:**
+```bash
+# 构建项目
+mvn clean package
 
-  - `200 OK`: 上传成功，返回上传结果信息
-  - `500 Internal Server Error`: 上传失败，返回错误信息（包含 `error` 字段）
+# 运行应用（开发环境）
+java -jar target/medimagebackend.jar --spring.profiles.active=dev
 
-------
+# 运行应用（生产环境）
+java -jar target/medimagebackend.jar --spring.profiles.active=prod
+```
 
-## 2. 获取上传目录下的文件夹信息
+## 项目结构
 
-- **接口地址:** `/list`
+```
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── nwu/
+│   │   │           └── medimagebackend/
+│   │   │               ├── config/        # 配置类
+│   │   │               ├── controller/    # 控制器，处理HTTP请求
+│   │   │               ├── DTO/           # 数据传输对象
+│   │   │               ├── entity/        # 实体类
+│   │   │               ├── mapper/        # 数据访问层
+│   │   │               ├── service/       # 服务层
+│   │   │               │   └── impl/      # 服务实现类
+│   │   │               ├── utils/         # 工具类
+│   │   │               └── MedimagebackendApplication.java  # 应用入口
+│   │   └── resources/
+│   │       ├── static/         # 静态资源
+│   │       ├── application.yml # 主配置文件
+│   │       ├── application-dev.yml  # 开发环境配置
+│   │       └── application-prod.yml # 生产环境配置
+│   └── test/                  # 测试代码
+├── pom.xml                    # Maven配置
+└── README.md                  # 项目说明文档
+```
 
-- **请求方式:** `GET`
+## 配置说明
 
-- **描述:** 列出上传目录下的所有文件夹信息。
+系统配置分为三个层次：
 
-- **请求参数:** 无
+1. **基础配置**（`application.yml`）：包含通用配置，如数据库连接、上传限制等
+2. **开发环境配置**（`application-dev.yml`）：开发环境特定配置，如本地路径等
+3. **生产环境配置**（`application-prod.yml`）：生产环境特定配置，如服务器路径等
 
-- **响应示例:**
+### 关键配置项
 
-  ```
-  json复制编辑[
-    {
-      "id": 1,
-      "name": "folder1",
-      "path": "/path/to/folder1"
-      // 其他 FileInfo 字段...
-    },
-    {
-      "id": 2,
-      "name": "folder2",
-      "path": "/path/to/folder2"
-      // 其他 FileInfo 字段...
-    }
-  ]
-  ```
-
-- **返回状态:**
-
-  - `200 OK`: 成功返回文件夹列表
-
-------
-
-## 3. 调用外部配准服务处理指定文件夹的配准操作
-
-- **接口地址:** `/register/{folder}`
-
-- **请求方式:** `POST`
-
-- **描述:** 调用外部配准服务对指定文件夹进行配准操作。
-
-- **请求参数:**
-
-  - **Path Parameter:** `folder` (String) — 指定要进行配准操作的文件夹名称
-  - **Request Body:** JSON 对象，包含：
-    - `username` (String): 用户名，用于标识或调用外部配准服务
-
-- **请求示例 (curl):**
-
-  ```
-  bash复制编辑curl -X POST "http://<server>/api/svs/register/folder1" \
-       -H "Content-Type: application/json" \
-       -d '{"username": "your_username"}'
+- **数据库配置**：
+  ```yaml
+  spring:
+    datasource:
+      url: jdbc:mysql://localhost:3306/med_image_analyse
+      username: root
+      password: 1234
   ```
 
-- **响应示例:**
-
-  ```
-  json复制编辑{
-    "status": "success",
-    "message": "配准操作已开始",
-    "data": {
-      // 其他返回信息
-    }
-  }
+- **文件上传目录**：
+  ```yaml
+  uploads:
+    svs:
+      dir: "/path/to/svs/uploads/"
+    register:
+      dir: "/path/to/register_results/"
   ```
 
-- **返回状态:**
-
-  - `200 OK`: 成功返回配准结果信息
-  - `500 Internal Server Error`: 配准操作失败，返回错误信息（包含 `error` 字段）
-
-
-
-# DZI 接口文档
-
-**Base URL:** `/api/dzi`
-
-------
-
-## 1. 获取 DZI 文件列表
-
-- **接口地址:** `/list`
-
-- **请求方式:** `GET`
-
-- **描述:** 获取所有 DZI 文件的列表。
-
-- **请求参数:** 无
-
-- **响应示例:**
-
-  ```
-  json复制编辑[
-    {
-      "id": 1,
-      "fileName": "example.dzi",
-      "filePath": "/path/to/example.dzi",
-      // 其他 FileInfo 字段...
-    },
-    {
-      "id": 2,
-      "fileName": "sample.dzi",
-      "filePath": "/path/to/sample.dzi",
-      // 其他 FileInfo 字段...
-    }
-  ]
+- **后端服务URL**：
+  ```yaml
+  app:
+    backend-url: "http://localhost:8080"  # 开发环境
+    # backend-url: "https://api.example.com"  # 生产环境
   ```
 
-- **返回状态:**
+## API文档
 
-  - `200 OK`：成功返回文件列表
+### 1. 图像上传和处理
 
-------
+#### 1.1 上传SVS图像文件
 
-## 2. 静态资源访问（DZI 描述文件或 tile 图片）
+- **URL**: `/api/svs/upload`
+- **方法**: `POST`
+- **参数**: `files` - 多文件上传
 
-- **接口地址:** `/processed/**`
-- **请求方式:** `GET`
-- **描述:** 提供静态资源访问，用于获取 DZI 描述文件或 tile 图片。请求 URL 中 `/processed/` 后面的部分将作为资源路径解析。
-- **请求参数:** 无（资源路径通过 URL 动态解析）
-- **响应示例:**
-  - 返回对应的静态资源文件（例如图片、XML 文件等）
-- **返回状态:**
-  - `200 OK`：成功返回资源文件
-  - `500 Internal Server Error`：文件获取异常
+#### 1.2 调用配准服务
 
-------
+- **URL**: `/api/svs/register/{folderName}`
+- **方法**: `POST`
+- **参数**: 
+  - `folderName` - 文件夹名称
+  - `userName` - 用户名
 
-## 3. 获取指定文件夹下的文件列表
+### 2. IHC分析
 
-- **接口地址:** `/list/{folderName}`
+#### 2.1 分析图像
 
-- **请求方式:** `GET`
+- **URL**: `/api/ihc/analyze`
+- **方法**: `POST`
+- **参数**:
+  - `folderName` - 文件夹名称
+  - `fileName` - 文件名
 
-- **描述:** 根据文件夹名称获取该文件夹下的所有文件（FileItem 列表）。
+#### 2.2 获取分析结果
 
-- **请求参数:**
+- **URL**: `/api/ihc/result`
+- **方法**: `GET`
+- **参数**:
+  - `folderName` - 文件夹名称
+  - `fileName` - 文件名
 
-  - **Path Parameter:** `folderName` - 文件夹名称
+#### 2.3 获取文件夹下的所有结果
 
-- **响应示例:**
+- **URL**: `/api/ihc/resultfolder`
+- **方法**: `GET`
+- **参数**:
+  - `folderName` - 文件夹名称
 
-  ```
-  json复制编辑[
-    {
-      "fileName": "image1.jpg",
-      "fileSize": "500KB",
-      // 其他 FileItem 字段...
-    },
-    {
-      "fileName": "image2.jpg",
-      "fileSize": "600KB",
-      // 其他 FileItem 字段...
-    }
-  ]
-  ```
+## 开发指南
 
-- **返回状态:**
+### 环境搭建
 
-  - `200 OK`：成功返回文件列表
-  - `404 Not Found`：文件夹下无文件或不存在
+1. 克隆代码仓库
+2. 安装JDK 11+和Maven 3.6+
+3. 在IDE中导入项目（推荐使用IntelliJ IDEA）
+4. 安装并配置MySQL数据库
+5. 创建相应的文件目录用于存储上传的图像
 
-------
+### 编码规范
 
-## 4. 删除文件夹
+- 使用Lombok减少样板代码
+- 所有公共API需添加Javadoc注释
+- 遵循RESTful API设计原则
+- 使用统一的响应格式
+- 使用PathUtils进行路径处理
 
-- **接口地址:** `/deleteFolder/{folderName}`
-- **请求方式:** `DELETE`
-- **描述:** 删除指定名称的文件夹。
-- **请求参数:**
-  - **Path Parameter:** `folderName` - 文件夹名称
-- **响应示例:** 无
-- **返回状态:**
-  - `200 OK`：文件夹删除成功
-  - `500 Internal Server Error`：文件夹删除失败
+## 贡献者
 
-------
+- MedImage团队
 
-## 5. 删除文件
+## 许可证
 
-- **接口地址:** `/delete/{folderName}/{fileName}`
-- **请求方式:** `DELETE`
-- **描述:** 删除指定文件夹下的指定文件。
-- **请求参数:**
-  - **Path Parameter:** `folderName` - 文件夹名称
-  - **Path Parameter:** `fileName` - 文件名称
-- **响应示例:** 无
-- **返回状态:**
-  - `200 OK`：文件删除成功
-  - `500 Internal Server Error`：文件删除失败
-
-# IHC 分析接口文档
-
-**Base URL:** `/api/ihc`
-
-------
-
-## 1. 图像分析
-
-- **接口地址:** `/analyze`
-
-- **请求方式:** `POST`
-
-- **描述:** 对指定文件夹下的指定文件进行免疫组化图像分析。
-
-- **请求参数:**
-
-  - **folderName** (Request Parameter, String): 文件夹名称
-  - **fileName** (Request Parameter, String): 文件名称
-
-- **响应示例:**
-
-  ```
-  json复制编辑{
-    "analysisId": 123,
-    "result": "positive",
-    "details": "详细的分析信息..."
-  }
-  ```
-
-- **返回状态:**
-
-  - `200 OK`：成功返回分析结果
-  - `500 Internal Server Error`：分析过程中发生异常
-
-------
-
-## 2. 查询单个文件的分析结果
-
-- **接口地址:** `/result`
-
-- **请求方式:** `GET`
-
-- **描述:** 根据文件夹名称和文件名称查询对应的免疫组化分析结果。
-
-- **请求参数:**
-
-  - **folderName** (Request Parameter, String): 文件夹名称
-  - **fileName** (Request Parameter, String): 文件名称
-
-- **响应示例:**
-
-  ```
-  json复制编辑{
-    "analysisId": 123,
-    "result": "positive",
-    "details": "详细的分析信息..."
-  }
-  ```
-
-- **返回状态:**
-
-  - `200 OK`：成功返回分析结果
-  - `404 Not Found`：未找到对应的分析结果
-  - `500 Internal Server Error`：查询过程中发生异常
-
-------
-
-## 3. 查询文件夹内所有分析结果
-
-- **接口地址:** `/resultfolder`
-
-- **请求方式:** `GET`
-
-- **描述:** 根据文件夹名称查询该文件夹下所有文件的免疫组化分析结果。
-
-- **请求参数:**
-
-  - **folderName** (Request Parameter, String): 文件夹名称
-
-- **响应示例:**
-
-  ```
-  json复制编辑[
-    {
-      "analysisId": 123,
-      "result": "positive",
-      "details": "详细的分析信息..."
-    },
-    {
-      "analysisId": 124,
-      "result": "negative",
-      "details": "详细的分析信息..."
-    }
-  ]
-  ```
-
-- **返回状态:**
-
-  - `200 OK`：成功返回分析结果列表
-  - `404 Not Found`：指定文件夹内无分析结果
-  - `500 Internal Server Error`：查询过程中发生异常
-
-# User 接口文档
-
-**Base URL:** `/api/user`
-
-------
-
-## 1. 用户登录
-
-- **接口地址:** `/login`
-
-- **请求方式:** `POST`
-
-- **描述:** 用户登录接口，通过提交用户信息进行登录。请求体中应包含用户名和密码等必要字段。
-
-- **请求参数:**
-
-  - **Request Body:** JSON 对象，示例字段：
-    - `username` (String) — 用户名
-    - `password` (String) — 密码
-
-- **请求示例:**
-
-  ```
-  json复制编辑{
-    "username": "exampleUser",
-    "password": "examplePassword"
-  }
-  ```
-
-- **响应说明:**
-
-  - **200 OK:** 登录成功，返回用户信息对象。
-  - **401 Unauthorized:** 登录失败，返回提示信息 "用户名或密码错误"。
-  - **400 Bad Request:** 请求异常，返回具体错误信息。
-
-- **响应示例 (成功):**
-
-  ```
-  json复制编辑{
-    "id": 1,
-    "username": "exampleUser",
-    "email": "user@example.com"
-    // 其他用户属性...
-  }
-  ```
-
-- **响应示例 (失败):**
-
-  ```
-  json
-  
-  
-  复制编辑
-  "用户名或密码错误"
-  ```
-
-------
-
-## 2. 用户注册
-
-- **接口地址:** `/register`
-
-- **请求方式:** `POST`
-
-- **描述:** 用户注册接口，通过提交用户信息进行注册。请求体中应包含必要的注册信息。
-
-- **请求参数:**
-
-  - **Request Body:** JSON 对象，示例字段：
-    - `username` (String) — 用户名
-    - `password` (String) — 密码
-    - `email` (String) — 邮箱（如果需要）
-
-- **请求示例:**
-
-  ```
-  json复制编辑{
-    "username": "newUser",
-    "password": "newPassword",
-    "email": "newuser@example.com"
-  }
-  ```
-
-- **响应说明:**
-
-  - **200 OK:** 注册成功，返回提示信息 "注册成功"。
-  - **400 Bad Request:** 请求异常或注册失败，返回具体错误信息。
-
-- **响应示例 (成功):**
-
-  ```
-  json
-  
-  
-  复制编辑
-  "注册成功"
-  ```
-
-- **响应示例 (失败):**
-
-  ```
-  json
-  
-  
-  复制编辑
-  "错误信息描述"
-  ```
+[MIT License](LICENSE)

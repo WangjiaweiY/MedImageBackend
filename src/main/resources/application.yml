@@ -17,11 +17,38 @@ spring:
     multipart:
       max-file-size: 5GB
       max-request-size: 5GB
+  profiles:
+    active: dev  # 默认激活开发环境配置
 
+# 上传目录配置
 uploads:
+  # DZI图像目录
   dzi:
     dir: "../uploads/dzi/"
+  # SVS图像上传目录
   svs:
     dir: "../uploads/svs/"
-  tiff:
-    dir: "../uploads/register_results"
+  # 注册结果目录
+  register:
+    dir: "../uploads/register_results/"
+
+# 后端服务URL配置
+app:
+  # 后端服务URL，用于构建资源访问路径
+  backend-url: "http://localhost:8080"
+  # 是否开启详细日志
+  debug-logging: true
+
+# 跨域资源共享配置
+cors:
+  # 允许的源模式，使用模式而不是具体源
+  # 当allow-credentials为true时，不能使用通配符"*"
+  allowed-origin-patterns: "http://localhost:5173,http://127.0.0.1:5173"
+  # 允许的HTTP方法
+  allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
+  # 允许的请求头
+  allowed-headers: "*"
+  # 是否允许凭证
+  allow-credentials: true
+  # 预检请求的有效期(秒)
+  max-age: 3600

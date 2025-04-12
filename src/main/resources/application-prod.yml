@@ -1,0 +1,41 @@
+# 生产环境配置
+
+# 数据库配置
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/med_image_analyse
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:1234}
+    hikari:
+      maximum-pool-size: 20
+
+# 上传目录配置（生产环境路径）
+uploads:
+  # DZI图像目录
+  dzi:
+    dir: "/app/uploads/dzi/"
+  # SVS图像上传目录
+  svs:
+    dir: "/app/uploads/svs/"
+  # 注册结果目录
+  register:
+    dir: "/app/uploads/register_results/"
+
+# 后端服务URL配置
+app:
+  # 生产环境后端服务URL（请替换为实际的域名）
+  backend-url: "https://api.medimage.example.com"
+  # 生产环境禁用详细日志
+  debug-logging: false
+
+# 日志配置
+logging:
+  level:
+    com.nwu.medimagebackend: INFO
+    org.springframework.web: WARN
+  file:
+    name: /app/logs/medimage.log
+  logback:
+    rollingpolicy:
+      max-file-size: 10MB
+      max-history: 30 
