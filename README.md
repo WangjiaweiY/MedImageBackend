@@ -118,15 +118,61 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
 
 - **URL**: `/api/svs/upload`
 - **方法**: `POST`
-- **参数**: `files` - 多文件上传
+- **Content-Type**: `multipart/form-data`
+- **参数**: 
+  - `files` (File[]) - 多文件上传，支持SVS格式
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "文件上传成功",
+    "data": {
+      "successCount": 2,
+      "failedCount": 0,
+      "failedFiles": []
+    }
+  }
+  ```
+- **错误码**:
+  - 400: 文件格式不支持
+  - 500: 服务器内部错误
+- **示例**:
+  ```bash
+  curl -X POST http://localhost:8080/api/svs/upload \
+    -H "Content-Type: multipart/form-data" \
+    -F "files=@/path/to/image1.svs" \
+    -F "files=@/path/to/image2.svs"
+  ```
 
 #### 1.2 调用配准服务
 
 - **URL**: `/api/svs/register/{folderName}`
 - **方法**: `POST`
+- **Content-Type**: `application/json`
 - **参数**: 
-  - `folderName` - 文件夹名称
-  - `userName` - 用户名
+  - `folderName` (String) - 文件夹名称（路径参数）
+  - `userName` (String) - 用户名（请求体）
+- **请求体格式**:
+  ```json
+  {
+    "userName": "test_user"
+  }
+  ```
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "配准服务调用成功",
+    "data": {
+      "taskId": "task_123456",
+      "status": "processing"
+    }
+  }
+  ```
+- **错误码**:
+  - 400: 参数错误
+  - 404: 文件夹不存在
+  - 500: 服务器内部错误
 
 ### 2. IHC分析
 
@@ -134,24 +180,114 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
 
 - **URL**: `/api/ihc/analyze`
 - **方法**: `POST`
+- **Content-Type**: `application/json`
 - **参数**:
-  - `folderName` - 文件夹名称
-  - `fileName` - 文件名
+  - `folderName` (String) - 文件夹名称
+  - `fileName` (String) - 文件名
+- **请求体格式**:
+  ```json
+  {
+    "folderName": "test_folder",
+    "fileName": "test_image.svs"
+  }
+  ```
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "分析任务已启动",
+    "data": {
+      "taskId": "task_789012",
+      "status": "processing"
+    }
+  }
+  ```
+- **错误码**:
+  - 400: 参数错误
+  - 404: 文件不存在
+  - 500: 服务器内部错误
 
 #### 2.2 获取分析结果
 
 - **URL**: `/api/ihc/result`
 - **方法**: `GET`
 - **参数**:
-  - `folderName` - 文件夹名称
-  - `fileName` - 文件名
+  - `folderName` (String) - 文件夹名称（查询参数）
+  - `fileName` (String) - 文件名（查询参数）
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "获取结果成功",
+    "data": {
+      "folderName": "test_folder",
+      "fileName": "test_image.svs",
+      "positiveRate": 0.75,
+      "analysisTime": "2024-03-20T10:30:00",
+      "status": "completed"
+    }
+  }
+  ```
+- **错误码**:
+  - 400: 参数错误
+  - 404: 结果不存在
+  - 500: 服务器内部错误
 
 #### 2.3 获取文件夹下的所有结果
 
 - **URL**: `/api/ihc/resultfolder`
 - **方法**: `GET`
 - **参数**:
-  - `folderName` - 文件夹名称
+  - `folderName` (String) - 文件夹名称（查询参数）
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "获取结果成功",
+    "data": [
+      {
+        "folderName": "test_folder",
+        "fileName": "image1.svs",
+        "positiveRate": 0.75,
+        "analysisTime": "2024-03-20T10:30:00",
+        "status": "completed"
+      },
+      {
+        "folderName": "test_folder",
+        "fileName": "image2.svs",
+        "positiveRate": 0.82,
+        "analysisTime": "2024-03-20T11:30:00",
+        "status": "completed"
+      }
+    ]
+  }
+  ```
+- **错误码**:
+  - 400: 参数错误
+  - 404: 文件夹不存在
+  - 500: 服务器内部错误
+
+### 3. 通用响应格式
+
+所有API响应都遵循以下格式：
+
+```json
+{
+  "code": 200,          // 状态码
+  "message": "成功",    // 响应消息
+  "data": {}           // 响应数据
+}
+```
+
+### 4. 通用错误码
+
+- 200: 成功
+- 400: 请求参数错误
+- 401: 未授权
+- 403: 禁止访问
+- 404: 资源不存在
+- 500: 服务器内部错误
+- 503: 服务不可用
 
 ## 开发指南
 
