@@ -112,9 +112,57 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
 
 ## API文档
 
-### 1. 图像上传和处理
+### 1. 用户管理
 
-#### 1.1 上传SVS图像文件
+#### 1.1 用户登录
+
+- **URL**: `/api/user/login`
+- **方法**: `POST`
+- **Content-Type**: `application/json`
+- **请求体格式**:
+  ```json
+  {
+    "username": "test_user",
+    "password": "password123"
+  }
+  ```
+- **响应格式**:
+  ```json
+  {
+    "id": 1,
+    "username": "test_user",
+    "role": "USER"
+  }
+  ```
+- **错误码**:
+  - 401: 用户名或密码错误
+  - 400: 请求参数错误
+
+#### 1.2 用户注册
+
+- **URL**: `/api/user/register`
+- **方法**: `POST`
+- **Content-Type**: `application/json`
+- **请求体格式**:
+  ```json
+  {
+    "username": "new_user",
+    "password": "password123"
+  }
+  ```
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "注册成功"
+  }
+  ```
+- **错误码**:
+  - 400: 注册失败（用户名已存在等）
+
+### 2. 图像上传和处理
+
+#### 2.1 上传SVS图像文件
 
 - **URL**: `/api/svs/upload`
 - **方法**: `POST`
@@ -136,26 +184,38 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
 - **错误码**:
   - 400: 文件格式不支持
   - 500: 服务器内部错误
-- **示例**:
-  ```bash
-  curl -X POST http://localhost:8080/api/svs/upload \
-    -H "Content-Type: multipart/form-data" \
-    -F "files=@/path/to/image1.svs" \
-    -F "files=@/path/to/image2.svs"
+
+#### 2.2 获取SVS文件列表
+
+- **URL**: `/api/svs/list`
+- **方法**: `GET`
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "获取成功",
+    "data": [
+      {
+        "folderName": "folder1",
+        "fileCount": 5,
+        "createTime": "2024-03-20T10:30:00"
+      }
+    ]
+  }
   ```
 
-#### 1.2 调用配准服务
+#### 2.3 调用配准服务
 
-- **URL**: `/api/svs/register/{folderName}`
+- **URL**: `/api/svs/register/{folder}`
 - **方法**: `POST`
 - **Content-Type**: `application/json`
 - **参数**: 
-  - `folderName` (String) - 文件夹名称（路径参数）
-  - `userName` (String) - 用户名（请求体）
+  - `folder` (String) - 文件夹名称（路径参数）
+  - `username` (String) - 用户名（请求体）
 - **请求体格式**:
   ```json
   {
-    "userName": "test_user"
+    "username": "test_user"
   }
   ```
 - **响应格式**:
@@ -174,9 +234,87 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
   - 404: 文件夹不存在
   - 500: 服务器内部错误
 
-### 2. IHC分析
+### 3. DZI图像管理
 
-#### 2.1 分析图像
+#### 3.1 获取DZI文件列表
+
+- **URL**: `/api/dzi/list`
+- **方法**: `GET`
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "获取成功",
+    "data": [
+      {
+        "folderName": "folder1",
+        "fileCount": 5,
+        "createTime": "2024-03-20T10:30:00"
+      }
+    ]
+  }
+  ```
+
+#### 3.2 获取DZI资源文件
+
+- **URL**: `/api/dzi/processed/**`
+- **方法**: `GET`
+- **说明**: 用于获取DZI描述文件(.dzi)和瓦片图像(.jpg/.png)
+- **响应**: 返回请求的资源文件
+
+#### 3.3 获取文件夹内容
+
+- **URL**: `/api/dzi/list/{folderName}`
+- **方法**: `GET`
+- **参数**:
+  - `folderName` (String) - 文件夹名称（路径参数）
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "获取成功",
+    "data": [
+      {
+        "fileName": "image1.dzi",
+        "fileSize": 1024,
+        "createTime": "2024-03-20T10:30:00"
+      }
+    ]
+  }
+  ```
+
+#### 3.4 删除文件夹
+
+- **URL**: `/api/dzi/deleteFolder/{folderName}`
+- **方法**: `DELETE`
+- **参数**:
+  - `folderName` (String) - 文件夹名称（路径参数）
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "删除成功"
+  }
+  ```
+
+#### 3.5 删除文件
+
+- **URL**: `/api/dzi/delete/{folderName}/{fileName}`
+- **方法**: `DELETE`
+- **参数**:
+  - `folderName` (String) - 文件夹名称（路径参数）
+  - `fileName` (String) - 文件名称（路径参数）
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "删除成功"
+  }
+  ```
+
+### 4. IHC分析
+
+#### 4.1 分析图像
 
 - **URL**: `/api/ihc/analyze`
 - **方法**: `POST`
@@ -207,7 +345,7 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
   - 404: 文件不存在
   - 500: 服务器内部错误
 
-#### 2.2 获取分析结果
+#### 4.2 获取分析结果
 
 - **URL**: `/api/ihc/result`
 - **方法**: `GET`
@@ -233,7 +371,7 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
   - 404: 结果不存在
   - 500: 服务器内部错误
 
-#### 2.3 获取文件夹下的所有结果
+#### 4.3 获取文件夹下的所有结果
 
 - **URL**: `/api/ihc/resultfolder`
 - **方法**: `GET`
@@ -251,13 +389,6 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
         "positiveRate": 0.75,
         "analysisTime": "2024-03-20T10:30:00",
         "status": "completed"
-      },
-      {
-        "folderName": "test_folder",
-        "fileName": "image2.svs",
-        "positiveRate": 0.82,
-        "analysisTime": "2024-03-20T11:30:00",
-        "status": "completed"
       }
     ]
   }
@@ -267,7 +398,64 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
   - 404: 文件夹不存在
   - 500: 服务器内部错误
 
-### 3. 通用响应格式
+#### 4.4 调整阈值并分析图像
+
+- **URL**: `/api/ihc/threshold-analysis`
+- **方法**: `POST`
+- **Content-Type**: `application/json`
+- **参数**:
+  - `folderName` (String) - 文件夹名称
+  - `fileName` (String) - 文件名
+  - `threshold` (Integer) - 阈值（0-255之间的整数值）
+- **请求体格式**:
+  ```json
+  {
+    "folderName": "test_folder",
+    "fileName": "test_image.svs",
+    "threshold": 128
+  }
+  ```
+- **响应格式**:
+  ```json
+  {
+    "code": 200,
+    "message": "阈值分析成功",
+    "data": {
+      "folderName": "test_folder",
+      "fileName": "test_image.svs",
+      "threshold": 128,
+      "positiveRate": 0.67,
+      "imageUrl": "/api/ihc/result-image/test_folder/test_image_128.jpg",
+      "analysisTime": "2024-03-20T10:30:00"
+    }
+  }
+  ```
+- **说明**: 
+  - 该接口用于根据指定的阈值对图像进行分析
+  - 阈值值范围为0-255，代表图像像素强度的阈值
+  - 返回的imageUrl包含了分析后的图像，其中大于阈值的区域被标红
+  - 每次调整阈值都会生成新的分析结果和对应的结果图像
+- **错误码**:
+  - 400: 参数错误（如阈值超出范围）
+  - 404: 文件不存在
+  - 500: 服务器内部错误
+
+#### 4.5 获取阈值分析结果图像
+
+- **URL**: `/api/ihc/result-image/{folderName}/{fileName}`
+- **方法**: `GET`
+- **参数**:
+  - `folderName` (String) - 文件夹名称（路径参数）
+  - `fileName` (String) - 结果图像文件名（路径参数）
+- **响应**: 返回阈值分析后的结果图像（JPEG/PNG格式）
+- **说明**:
+  - 该接口用于获取阈值分析生成的结果图像
+  - 文件名格式通常为原始文件名加阈值后缀，如`test_image_128.jpg`
+- **错误码**:
+  - 404: 结果图像不存在
+  - 500: 服务器内部错误
+
+### 5. 通用响应格式
 
 所有API响应都遵循以下格式：
 
@@ -279,7 +467,7 @@ java -jar target/medimagebackend.jar --spring.profiles.active=prod
 }
 ```
 
-### 4. 通用错误码
+### 6. 通用错误码
 
 - 200: 成功
 - 400: 请求参数错误

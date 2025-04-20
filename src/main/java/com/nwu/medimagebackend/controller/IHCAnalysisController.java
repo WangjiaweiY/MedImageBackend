@@ -117,4 +117,37 @@ public class IHCAnalysisController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+    
+    /**
+     * 使用指定阈值分析免疫组化图像
+     * <p>
+     * 对免疫组化图像进行阈值分析，将大于阈值的区域标红，并返回分析结果及处理后的图像。
+     * 适用于前端动态调整阈值进行实时分析的场景。
+     * </p>
+     * 
+     * @param folderName 图像所在文件夹名称
+     * @param fileName 图像文件名
+     * @param threshold 分析阈值(0-255之间)
+     * @return 包含分析结果和处理后图像URL的响应
+     */
+    @PostMapping("/analyze/threshold")
+    public ResponseEntity<IhcAnalysisResult> analyzeImageWithThreshold(
+            @RequestParam("folderName") String folderName,
+            @RequestParam("fileName") String fileName,
+            @RequestParam("threshold") double threshold) {
+        try {
+            log.info("接收到免疫组化阈值分析请求: 文件夹[{}], 文件[{}], 阈值[{}]", 
+                    folderName, fileName, threshold);
+            
+            IhcAnalysisResult result = analysisService.analyzeImageWithThreshold(folderName, fileName, threshold);
+            
+            log.info("免疫组化阈值分析完成: 文件夹[{}], 文件[{}], 阈值[{}], 阳性率: {}", 
+                    folderName, fileName, threshold, result.getPositiveRatio());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            log.error("免疫组化阈值分析失败: 文件夹[{}], 文件[{}], 阈值[{}], 错误: {}", 
+                    folderName, fileName, threshold, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
 }

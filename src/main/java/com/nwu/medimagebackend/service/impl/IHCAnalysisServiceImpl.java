@@ -24,6 +24,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
 import java.util.List;
+import java.awt.Color;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 /**
  * 免疫组化分析服务实现类
@@ -53,6 +56,12 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
     private String backendUrl;
     
     /**
+     * 处理后的图像存储目录
+     */
+    @Value("${uploads.processed.dir:../uploads/processed/}")
+    private String processedImagesDir;
+    
+    /**
      * 服务初始化
      */
     @PostConstruct
@@ -60,9 +69,11 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
         log.info("初始化IHC分析服务");
         log.info("图像目录: {}", imageDir);
         log.info("后端服务URL: {}", backendUrl);
+        log.info("处理后图像目录: {}", processedImagesDir);
         
         // 确保目录存在
         PathUtils.ensureDirectoryExists(imageDir);
+        PathUtils.ensureDirectoryExists(processedImagesDir);
     }
 
     /**
@@ -97,7 +108,7 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
         Img<UnsignedByteType> img = (Img<UnsignedByteType>) dataset.getImgPlus().getImg();
         
         // 计算阈值统计数据
-        AnalysisResult analysis = calculateThresholdStatistics(img);
+        AnalysisResult analysis = calculateDefaultThresholdStatistics(img);
 
         // 构造免疫组化分析结果
         IhcAnalysisResult result = createAnalysisResult(folderName, fileName, analysis);
@@ -240,6 +251,172 @@ public class IHCAnalysisServiceImpl implements IHCAnalysisService {
             result.setThumbnailPath(defaultThumbnailUrl);
             result.setImageUrl(defaultThumbnailUrl);
         }
+    }
+    
+    /**
+     * 使用指定阈值分析免疫组化图像并生成可视化结果
+     * 
+     * @param folderName 文件夹名称
+     * @param fileName 文件名
+     * @param threshold 用户指定的阈值(0-255之间)
+     * @return 分析结果和带有阳性区域高亮的图像URL
+     * @throws Exception 如果分析过程出错
+     */
+    @Override
+    public IhcAnalysisResult analyzeImageWithThreshold(String folderName, String fileName, double threshold) throws Exception {
+        // 确保阈值在有效范围内(0-255)
+        threshold = Math.max(0, Math.min(255, threshold));
+        
+        // 构造图像完整路径
+        String slidesDir = PathUtils.toAbsolutePath(imageDir, folderName + "/registered_slides");
+        Path imagePath = Paths.get(slidesDir, fileName + ".ome.tiff");
+        log.info("使用阈值[{}]分析图像: {}", threshold, imagePath);
+
+        // 检查文件是否存在
+        if (!Files.exists(imagePath)) {
+            throw new IOException("文件不存在: " + imagePath.toString());
+        }
+
+        // 创建ImageJ2实例并打开图像
+        ImageJ ij = new ImageJ();
+        Dataset dataset = ij.scifio().datasetIO().open(imagePath.toString());
+        if (dataset == null) {
+            throw new Exception("无法打开图像文件: " + imagePath);
+        }
+
+        // 分析图像
+        @SuppressWarnings("unchecked")
+        Img<UnsignedByteType> img = (Img<UnsignedByteType>) dataset.getImgPlus().getImg();
+        
+        // 计算阈值统计数据
+        AnalysisResult analysis = calculateThresholdStatistics(img, threshold);
+        
+        // 生成可视化结果图像(将大于阈值的区域标红)
+        String processedImagePath = generateProcessedImage(img, threshold, folderName, fileName);
+        
+        // 构造免疫组化分析结果
+        IhcAnalysisResult result = createAnalysisResult(folderName, fileName, analysis);
+        
+        // 设置处理后的图像URL
+        String processedImageUrl = PathUtils.buildUrlPath(backendUrl, "/processed-images/", 
+                folderName + "/" + fileName + "_threshold_" + (int)threshold + ".png");
+        result.setImageUrl(processedImageUrl);
+        
+        // 保存分析结果
+        mapper.updateIhcAnalysisResult(result);
+        log.info("文件: {}/{} 使用阈值[{}]分析完毕, 阳性率: {}", 
+                folderName, fileName, threshold, result.getPositiveRatio());
+
+        return result;
+    }
+    
+    /**
+     * 使用指定阈值计算图像的阈值统计数据
+     * 
+     * @param img 图像数据
+     * @param threshold 阈值
+     * @return 分析结果包含总像素数和阳性像素数
+     */
+    private AnalysisResult calculateThresholdStatistics(Img<UnsignedByteType> img, double threshold) {
+        long totalPixels = img.size();
+        long positiveCount = 0;
+        
+        Cursor<UnsignedByteType> cursor = img.cursor();
+        while (cursor.hasNext()) {
+            UnsignedByteType pixel = cursor.next();
+            if (pixel.getRealDouble() >= threshold) {
+                positiveCount++;
+            }
+        }
+        
+        return new AnalysisResult(totalPixels, positiveCount);
+    }
+    
+    /**
+     * 生成处理后的图像文件，将大于阈值的区域标红
+     * 
+     * @param img 原始图像
+     * @param threshold 阈值
+     * @param folderName 文件夹名称
+     * @param fileName 文件名
+     * @return 处理后图像的文件路径
+     * @throws IOException 如果图像处理或保存失败
+     */
+    private String generateProcessedImage(Img<UnsignedByteType> img, double threshold, 
+                                         String folderName, String fileName) throws IOException {
+        // 创建相同尺寸的彩色图像
+        long[] dimensions = new long[img.numDimensions()];
+        img.dimensions(dimensions);
+        
+        // 创建处理后图像的存储目录
+        String outputDirPath = PathUtils.toAbsolutePath(processedImagesDir, folderName);
+        PathUtils.ensureDirectoryExists(outputDirPath);
+        
+        // 处理后图像的文件名
+        String outputFileName = fileName + "_threshold_" + (int)threshold + ".png";
+        Path outputPath = Paths.get(outputDirPath, outputFileName);
+        
+        // 先创建一个临时数组存储所有像素值
+        int width = (int)dimensions[0];
+        int height = (int)dimensions[1];
+        double[][] pixelValues = new double[width][height];
+        
+        // 第一次遍历：读取所有像素值
+        Cursor<UnsignedByteType> firstCursor = img.localizingCursor();
+        while (firstCursor.hasNext()) {
+            UnsignedByteType pixel = firstCursor.next();
+            int[] position = new int[img.numDimensions()];
+            firstCursor.localize(position);
+            
+            int x = position[0];
+            int y = position[1];
+            
+            if (x < width && y < height) {
+                pixelValues[x][y] = pixel.getRealDouble();
+            }
+        }
+        
+        // 创建Java AWT BufferedImage用于保存结果 - 使用RGB类型
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        
+        // 第二次遍历：创建输出图像
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                double value = pixelValues[x][y];
+                int rgb;
+                
+                if (value >= threshold) {
+                    // 大于阈值的区域标红 - 半透明红色，保留一些原始灰度信息
+                    int gray = (int)value;
+                    int red = Math.min(255, 255);
+                    int green = Math.min(255, gray / 3);
+                    int blue = Math.min(255, gray / 3);
+                    rgb = new Color(red, green, blue).getRGB();
+                } else {
+                    // 其他区域保持原灰度
+                    int gray = (int)value;
+                    rgb = new Color(gray, gray, gray).getRGB();
+                }
+                
+                bufferedImage.setRGB(x, y, rgb);
+            }
+        }
+        
+        // 保存图像
+        ImageIO.write(bufferedImage, "PNG", outputPath.toFile());
+        log.info("生成处理后图像: {}", outputPath);
+        
+        return outputPath.toString();
+    }
+    
+    /**
+     * 计算图像的阈值统计数据，使用默认阈值(195.0)
+     * 
+     * @param img 图像数据
+     * @return 分析结果包含总像素数和阳性像素数
+     */
+    private AnalysisResult calculateDefaultThresholdStatistics(Img<UnsignedByteType> img) {
+        return calculateThresholdStatistics(img, 195.0); // 使用默认阈值195.0
     }
     
     /**
