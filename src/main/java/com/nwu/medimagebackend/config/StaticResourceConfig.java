@@ -50,6 +50,11 @@ public class StaticResourceConfig implements WebMvcConfigurer {
      * 处理后图像的绝对路径
      */
     private String processedImagesAbsolutePath;
+    
+    /**
+     * Fullnet分析图像的绝对路径
+     */
+    private String fullnetImagesAbsolutePath;
 
     /**
      * 初始化配置，检查目录存在性并记录日志
@@ -71,8 +76,12 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         log.info("配准结果绝对路径: {}", registrationResultsAbsolutePath);
         
         // 设置处理后图像的绝对路径
-        processedImagesAbsolutePath = "D:/codeworkspace/uploads/processed/";
+        processedImagesAbsolutePath = "D:/codeworkspace/medimagebackend/uploads/processed/";
         log.info("处理后图像绝对路径: {}", processedImagesAbsolutePath);
+        
+        // 设置Fullnet图像的绝对路径
+        fullnetImagesAbsolutePath = "D:/codeworkspace/medimagebackend/uploads/fullnet/";
+        log.info("Fullnet图像绝对路径: {}", fullnetImagesAbsolutePath);
     }
     
     /**
@@ -102,6 +111,9 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         
         // 配置处理后图像资源映射
         configProcessedImagesMapping(registry);
+        
+        // 配置Fullnet图像资源映射
+        configFullnetImagesMapping(registry);
     }
     
     /**
@@ -138,6 +150,18 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         String location = "file:" + processedImagesAbsolutePath;
         log.info("注册处理后图像资源映射: /processed-images/** -> {}", location);
         registry.addResourceHandler("/processed-images/**")
+                .addResourceLocations(location);
+    }
+    
+    /**
+     * 配置Fullnet图像资源映射
+     * 
+     * @param registry 资源处理器注册表
+     */
+    private void configFullnetImagesMapping(ResourceHandlerRegistry registry) {
+        String location = "file:" + fullnetImagesAbsolutePath;
+        log.info("注册Fullnet图像资源映射: /fullnet-images/** -> {}", location);
+        registry.addResourceHandler("/fullnet-images/**")
                 .addResourceLocations(location);
     }
 }
