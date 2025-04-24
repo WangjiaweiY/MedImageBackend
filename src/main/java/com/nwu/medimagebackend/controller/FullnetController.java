@@ -98,6 +98,7 @@ public class FullnetController {
                 // 首先尝试直接通过任务ID查询结果
                 log.info("尝试使用任务ID直接查询分析结果: {}", taskId);
                 result = fullnetService.getResultByTaskId(taskId);
+                log.info(result.toString());
                 
                 // 如果找不到，但任务有关联的结果ID，则使用结果ID查询
                 if (result == null && task.getResultId() != null) {
@@ -121,11 +122,11 @@ public class FullnetController {
                     log.info("找到分析结果: ID[{}], 文件名[{}]", result.getId(), result.getFilename());
                     
                     // 如果结果没有关联任务ID，更新关联
-                    if (result.getTaskId() == null) {
-                        log.info("更新分析结果的任务ID关联: 结果ID[{}], 任务ID[{}]", result.getId(), taskId);
-                        result.setTaskId(taskId);
-                        fullnetService.saveAnalysisResult(null, taskId);
-                    }
+//                    if (result.getTaskId() == null) {
+//                        log.info("更新分析结果的任务ID关联: 结果ID[{}], 任务ID[{}]", result.getId(), taskId);
+//                        result.setTaskId(taskId);
+//                        fullnetService.saveAnalysisResult(null, taskId);
+//                    }
                     
                     Map<String, Object> response = new HashMap<>();
                     response.put("task", task);

@@ -45,6 +45,17 @@ public interface FullnetMapper {
      * @param taskId 任务ID
      * @return 分析结果
      */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
     @Select("SELECT * FROM fullnet_results WHERE task_id = #{taskId}")
     FullnetResult findByTaskId(String taskId);
     
