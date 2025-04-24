@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -453,6 +454,107 @@ public class FullnetController {
             return "image/svs";
         } else {
             return "application/octet-stream";
+        }
+    }
+
+    /**
+     * 获取特定文件的所有历史Fullnet分析记录
+     *
+     * @param folderName 文件夹名称
+     * @param fileName 文件名称
+     * @return 历史分析记录列表
+     */
+    @GetMapping("/history")
+    public ResponseEntity<List<FullnetResult>> getHistory(
+            @RequestParam String folderName,
+            @RequestParam String fileName) {
+        log.info("获取历史分析记录: folderName={}, fileName={}", folderName, fileName);
+        try {
+            // 构建完整文件名
+            String fullFilename = folderName + "/" + fileName;
+            
+            // 如果fileName已经包含文件扩展名，则直接使用
+            // 否则尝试多种常见的文件扩展名
+            List<FullnetResult> history = new ArrayList<>();
+            if (fileName.contains(".")) {
+                // 已经包含扩展名
+                history = fullnetService.getHistoryByFilename(fullFilename);
+            } else {
+                // 尝试常见图像格式后缀
+                for (String ext : new String[]{"", ".png", ".jpg", ".jpeg", ".tif", ".tiff", ".svs"}) {
+                    List<FullnetResult> results = fullnetService.getHistoryByFilename(fullFilename + ext);
+                    if (results != null && !results.isEmpty()) {
+                        history = results;
+                        log.info("找到文件历史记录(后缀{}): {}", ext, fullFilename + ext);
+                        break;
+                    }
+                }
+                
+                // 如果没有找到结果，使用模糊匹配
+                if (history.isEmpty()) {
+                    log.info("使用模糊匹配查询历史记录: {}", fullFilename);
+                    history = fullnetService.getHistoryByFilenameLike(fullFilename);
+                    log.info("模糊匹配找到记录数: {}", history.size());
+                }
+            }
+            
+            log.info("找到历史记录总数: {}", history.size());
+            return ResponseEntity.ok(history);
+        } catch (Exception e) {
+            log.error("获取历史分析记录失败: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 根据结果ID获取单个分析结果的详细信息
+     *
+     * @param resultId 分析结果ID
+     * @return 分析结果详情
+     */
+    @GetMapping("/result/{resultId}")
+    public ResponseEntity<FullnetResult> getResult(@PathVariable Long resultId) {
+        log.info("获取分析结果详情: resultId={}", resultId);
+        try {
+            FullnetResult result = fullnetService.getResultById(resultId);
+            if (result != null) {
+                return ResponseEntity.ok(result);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("获取分析结果详情失败: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * 删除特定ID的历史分析结果
+     *
+     * @param resultId 分析结果ID
+     * @return 删除操作结果
+     */
+    @DeleteMapping("/result/{resultId}")
+    public ResponseEntity<Map<String, Object>> deleteResult(@PathVariable Long resultId) {
+        log.info("删除分析结果: resultId={}", resultId);
+        Map<String, Object> response = new HashMap<>();
+        
+        try {
+            boolean deleted = fullnetService.deleteResult(resultId);
+            if (deleted) {
+                response.put("success", true);
+                response.put("message", "分析结果已成功删除");
+                return ResponseEntity.ok(response);
+            } else {
+                response.put("success", false);
+                response.put("message", "未找到指定的分析结果");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+        } catch (Exception e) {
+            log.error("删除分析结果失败: {}", e.getMessage(), e);
+            response.put("success", false);
+            response.put("message", "删除分析结果失败: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 } 

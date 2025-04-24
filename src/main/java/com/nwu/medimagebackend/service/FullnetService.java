@@ -101,4 +101,28 @@ public interface FullnetService {
      * @return 分析结果列表
      */
     List<FullnetResult> getAllResults();
+
+    /**
+     * 获取特定文件的所有历史分析记录
+     *
+     * @param filename 完整文件名称（包含文件夹路径）
+     * @return 历史分析记录列表
+     */
+    List<FullnetResult> getHistoryByFilename(String filename);
+
+    /**
+     * 模糊匹配文件名查询历史分析记录
+     *
+     * @param filenamePattern 文件名模式，如 "test/test1"
+     * @return 历史分析记录列表
+     */
+    List<FullnetResult> getHistoryByFilenameLike(String filenamePattern);
+
+    /**
+     * 删除特定ID的分析结果
+     *
+     * @param resultId 分析结果ID
+     * @return 是否删除成功
+     */
+    boolean deleteResult(Long resultId);
 } 

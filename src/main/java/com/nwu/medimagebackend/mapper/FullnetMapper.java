@@ -36,6 +36,17 @@ public interface FullnetMapper {
      * @param id 结果ID
      * @return 分析结果
      */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
     @Select("SELECT * FROM fullnet_results WHERE id = #{id}")
     FullnetResult findById(Long id);
     
@@ -65,6 +76,17 @@ public interface FullnetMapper {
      * @param filename 文件名
      * @return 分析结果
      */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
     @Select("SELECT * FROM fullnet_results WHERE filename = #{filename}")
     FullnetResult findByFilename(String filename);
     
@@ -73,8 +95,68 @@ public interface FullnetMapper {
      * 
      * @return 分析结果列表
      */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
     @Select("SELECT * FROM fullnet_results ORDER BY analysis_time DESC")
     List<FullnetResult> findAll();
+    
+    /**
+     * 获取特定文件的所有历史分析记录
+     * 
+     * @param filename 文件名
+     * @return 分析结果列表
+     */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
+    @Select("SELECT * FROM fullnet_results WHERE filename = #{filename} ORDER BY analysis_time DESC")
+    List<FullnetResult> findAllByFilename(String filename);
+    
+    /**
+     * 模糊匹配文件名查询历史分析记录
+     * 
+     * @param filenamePattern 文件名模式，如 "test/test1"
+     * @return 分析结果列表
+     */
+    @Results({
+            @Result(property = "resultImagePath", column = "result_image_path"),
+            @Result(property = "overlayImagePath", column = "overlay_image_path"),
+            @Result(property = "cellCount", column = "cell_count"),
+            @Result(property = "cellArea", column = "cell_area"),
+            @Result(property = "totalArea", column = "total_area"),
+            @Result(property = "cellRatio", column = "cell_ratio"),
+            @Result(property = "avgCellSize", column = "avg_cell_size"),
+            @Result(property = "analysisTime", column = "analysis_time"),
+            @Result(property = "taskId", column = "task_id")
+    })
+    @Select("SELECT * FROM fullnet_results WHERE filename LIKE CONCAT(#{filenamePattern}, '%') ORDER BY analysis_time DESC")
+    List<FullnetResult> findAllByFilenameLike(String filenamePattern);
+    
+    /**
+     * 根据ID删除分析结果
+     * 
+     * @param id 结果ID
+     * @return 影响的行数
+     */
+    @Delete("DELETE FROM fullnet_results WHERE id = #{id}")
+    int deleteById(Long id);
     
     /**
      * 更新分析结果

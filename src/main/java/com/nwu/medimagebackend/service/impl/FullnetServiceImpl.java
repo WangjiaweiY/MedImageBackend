@@ -566,18 +566,31 @@ public class FullnetServiceImpl implements FullnetService {
     }
     
     /**
-     * 根据ID获取分析结果
-     * 
-     * @param id 结果ID
-     * @return 分析结果，如果未找到则返回null
+     * 获取特定文件的所有历史分析记录
+     *
+     * @param filename 完整文件名称（包含文件夹路径）
+     * @return 历史分析记录列表
      */
     @Override
-    public FullnetResult getResultById(Long id) {
-        if (id == null) {
+    public List<FullnetResult> getHistoryByFilename(String filename) {
+        log.info("获取文件的历史分析记录: {}", filename);
+        return fullnetMapper.findAllByFilename(filename);
+    }
+    
+    /**
+     * 根据ID获取分析结果
+     *
+     * @param resultId 分析结果ID
+     * @return 分析结果对象
+     */
+    @Override
+    public FullnetResult getResultById(Long resultId) {
+        log.info("根据ID获取分析结果: {}", resultId);
+        if (resultId == null) {
             log.warn("查询结果的ID为null");
             return null;
         }
-        return fullnetMapper.findById(id);
+        return fullnetMapper.findById(resultId);
     }
     
     /**
@@ -593,5 +606,46 @@ public class FullnetServiceImpl implements FullnetService {
             return null;
         }
         return fullnetMapper.findByTaskId(taskId);
+    }
+    
+    /**
+     * 删除特定ID的分析结果
+     *
+     * @param resultId 分析结果ID
+     * @return 是否删除成功
+     */
+    @Override
+    public boolean deleteResult(Long resultId) {
+        log.info("删除分析结果: {}", resultId);
+        if (resultId == null) {
+            log.warn("删除结果的ID为null");
+            return false;
+        }
+        
+        try {
+            int rowsAffected = fullnetMapper.deleteById(resultId);
+            boolean success = rowsAffected > 0;
+            if (success) {
+                log.info("成功删除分析结果: {}", resultId);
+            } else {
+                log.warn("删除分析结果失败，可能不存在ID: {}", resultId);
+            }
+            return success;
+        } catch (Exception e) {
+            log.error("删除分析结果时出错: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+    
+    /**
+     * 模糊匹配文件名查询历史分析记录
+     *
+     * @param filenamePattern 文件名模式，如 "test/test1"
+     * @return 历史分析记录列表
+     */
+    @Override
+    public List<FullnetResult> getHistoryByFilenameLike(String filenamePattern) {
+        log.info("模糊匹配文件名查询历史记录: {}", filenamePattern);
+        return fullnetMapper.findAllByFilenameLike(filenamePattern);
     }
 } 
