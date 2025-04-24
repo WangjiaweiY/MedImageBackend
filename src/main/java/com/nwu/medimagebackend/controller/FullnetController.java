@@ -7,10 +7,19 @@ import com.nwu.medimagebackend.entity.FullnetTask;
 import com.nwu.medimagebackend.service.FullnetService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.servlet.http.HttpServletRequest;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +39,9 @@ public class FullnetController {
 
     @Autowired
     private FullnetService fullnetService;
+
+    @Value("${uploads.fullnet.results.dir:../uploads/fullnet_results/}")
+    private String fullnetResultsDir;
 
     /**
      * 分析图像（异步方式）
@@ -98,7 +110,6 @@ public class FullnetController {
                 // 首先尝试直接通过任务ID查询结果
                 log.info("尝试使用任务ID直接查询分析结果: {}", taskId);
                 result = fullnetService.getResultByTaskId(taskId);
-                log.info(result.toString());
                 
                 // 如果找不到，但任务有关联的结果ID，则使用结果ID查询
                 if (result == null && task.getResultId() != null) {
@@ -122,11 +133,11 @@ public class FullnetController {
                     log.info("找到分析结果: ID[{}], 文件名[{}]", result.getId(), result.getFilename());
                     
                     // 如果结果没有关联任务ID，更新关联
-//                    if (result.getTaskId() == null) {
-//                        log.info("更新分析结果的任务ID关联: 结果ID[{}], 任务ID[{}]", result.getId(), taskId);
-//                        result.setTaskId(taskId);
-//                        fullnetService.saveAnalysisResult(null, taskId);
-//                    }
+                    if (result.getTaskId() == null) {
+                        log.info("更新分析结果的任务ID关联: 结果ID[{}], 任务ID[{}]", result.getId(), taskId);
+                        result.setTaskId(taskId);
+                        fullnetService.saveAnalysisResult(null, taskId);
+                    }
                     
                     Map<String, Object> response = new HashMap<>();
                     response.put("task", task);
@@ -365,6 +376,83 @@ public class FullnetController {
             log.error("查询任务关联的分析结果失败: 任务ID[{}], 错误: {}", taskId, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("查询分析结果失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取Fullnet分析结果图像
+     * 
+     * @param request HTTP请求
+     * @return 图像资源
+     */
+    @GetMapping("/images/**")
+    public ResponseEntity<Resource> getFullnetImage(HttpServletRequest request) {
+        try {
+            // 获取完整的请求路径
+            String fullPath = request.getRequestURI();
+            log.info("请求Fullnet图像: {}", fullPath);
+            
+            // 提取 /api/fullnet/images/ 之后的部分作为相对路径
+            String relativePath = fullPath.substring("/api/fullnet/images/".length());
+            log.info("提取的相对路径: {}", relativePath);
+            
+            // 如果路径包含fullnet_results前缀，移除它
+            if (relativePath.startsWith("fullnet_results/")) {
+                relativePath = relativePath.substring("fullnet_results/".length());
+                log.info("处理后的路径: {}", relativePath);
+            }
+            
+            // 构建完整的文件路径
+            Path filePath = Paths.get(fullnetResultsDir).resolve(relativePath).normalize();
+            log.info("尝试访问文件: {}", filePath);
+            
+            // 安全检查，确保文件路径在允许的目录内
+            if (!filePath.startsWith(Paths.get(fullnetResultsDir).normalize())) {
+                log.warn("非法图像访问请求: {}", relativePath);
+                return ResponseEntity.badRequest().build();
+            }
+            
+            // 读取文件
+            Resource resource = new FileSystemResource(filePath);
+            
+            // 检查文件是否存在
+            if (resource.exists() && resource.isReadable()) {
+                // 根据文件扩展名设置Content-Type
+                String contentType = determineContentType(filePath);
+                
+                // 设置响应头
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(contentType));
+                
+                log.info("成功返回图像: {}", filePath);
+                return ResponseEntity.ok()
+                        .headers(headers)
+                        .body(resource);
+            } else {
+                log.warn("图像不存在或无法读取: {}", filePath);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            log.error("获取图像失败: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+    
+    /**
+     * 确定文件的Content-Type
+     */
+    private String determineContentType(Path filePath) {
+        String fileName = filePath.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".png")) {
+            return "image/png";
+        } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+            return "image/jpeg";
+        } else if (fileName.endsWith(".tif") || fileName.endsWith(".tiff")) {
+            return "image/tiff";
+        } else if (fileName.endsWith(".svs")) {
+            return "image/svs";
+        } else {
+            return "application/octet-stream";
         }
     }
 } 

@@ -42,6 +42,12 @@ public class StaticResourceConfig implements WebMvcConfigurer {
     private String processedImagesDir;
     
     /**
+     * Fullnet结果图像的存储目录
+     */
+    @Value("${uploads.fullnet.results.dir:../uploads/fullnet_results/}")
+    private String fullnetResultsDir;
+    
+    /**
      * 配准结果的绝对路径，为了确保路径一致性
      */
     private String registrationResultsAbsolutePath;
@@ -65,11 +71,13 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         log.info("DZI图像目录: {}", uploadsDziDir);
         log.info("配准结果目录: {}", registrationResultsDir);
         log.info("处理后图像目录: {}", processedImagesDir);
+        log.info("Fullnet结果目录: {}", fullnetResultsDir);
         
         // 检查目录是否存在，创建日志记录
         checkDirectory(uploadsDziDir);
         checkDirectory(registrationResultsDir);
         checkDirectory(processedImagesDir);
+        checkDirectory(fullnetResultsDir);
         
         // 设置固定的绝对路径，确保一致性
         registrationResultsAbsolutePath = "D:/codeworkspace/uploads/register_results/";
@@ -80,7 +88,7 @@ public class StaticResourceConfig implements WebMvcConfigurer {
         log.info("处理后图像绝对路径: {}", processedImagesAbsolutePath);
         
         // 设置Fullnet图像的绝对路径
-        fullnetImagesAbsolutePath = "D:/codeworkspace/medimagebackend/uploads/fullnet/";
+        fullnetImagesAbsolutePath = "D:/codeworkspace/uploads/fullnet_results/";
         log.info("Fullnet图像绝对路径: {}", fullnetImagesAbsolutePath);
     }
     
@@ -160,8 +168,8 @@ public class StaticResourceConfig implements WebMvcConfigurer {
      */
     private void configFullnetImagesMapping(ResourceHandlerRegistry registry) {
         String location = "file:" + fullnetImagesAbsolutePath;
-        log.info("注册Fullnet图像资源映射: /fullnet-images/** -> {}", location);
-        registry.addResourceHandler("/fullnet-images/**")
+        log.info("注册Fullnet图像资源映射: /api/fullnet/images/** -> {}", location);
+        registry.addResourceHandler("/api/fullnet/images/**")
                 .addResourceLocations(location);
     }
 }
